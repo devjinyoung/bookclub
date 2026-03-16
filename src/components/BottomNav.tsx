@@ -1,18 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { getCurrentUser } from "@/lib/profile";
 
 const tabs = [
-  { href: "/", label: "Home", icon: "🏠" },
-  { href: "/nominations", label: "Nominations", icon: "📚" },
-  { href: "/members", label: "Members", icon: "👥" },
-  // We’ll later route this to /profile/[currentUserId]; for now /profile/me
-  { href: "/profile/me", label: "Profile", icon: "👤" },
-];
+  { href: "/", label: "Home", icon: "🏠" as const },
+  { href: "/nominations", label: "Nominations", icon: "📚" as const },
+  { href: "/members", label: "Members", icon: "👥" as const },
+] as const;
 
 export function BottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    getCurrentUser().then(({ data }) => {
+      if (data.user) {
+        setCurrentUserId(data.user.id);
+      }
+    });
+  }, []);
+
+  const isProfileActive = pathname.startsWith("/profile");
 
   return (
     <nav className="sticky bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950/80 backdrop-blur-md">
@@ -38,6 +50,25 @@ export function BottomNav() {
             </Link>
           );
         })}
+
+        <button
+          type="button"
+          onClick={() => {
+            if (currentUserId) {
+              router.push(`/profile/${currentUserId}`);
+            } else {
+              router.push("/login");
+            }
+          }}
+          className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-2 py-1 text-xs transition-colors ${
+            isProfileActive
+              ? "text-sky-300"
+              : "text-slate-400 hover:text-slate-100"
+          }`}
+        >
+          <span className="text-lg leading-none">👤</span>
+          <span className="leading-none">Profile</span>
+        </button>
       </div>
     </nav>
   );

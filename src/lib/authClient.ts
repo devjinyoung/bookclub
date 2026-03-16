@@ -28,6 +28,10 @@ export async function signUpWithEmail({
     throw error;
   }
 
+  if (typeof document !== "undefined") {
+    document.cookie = "bookclub-auth=1; path=/";
+  }
+
   return data;
 }
 
@@ -44,6 +48,11 @@ export async function signInWithEmail({ email, password }: SignInParams) {
 
   if (error) {
     throw error;
+  }
+
+  if (typeof document !== "undefined") {
+    console.log("setting cookie");
+    document.cookie = "bookclub-auth=1; path=/";
   }
 
   return data;
