@@ -266,7 +266,7 @@ export default function DashboardPage() {
                 {levelInfo.level === 'Shakespeare' && '✍️ Shakespeare'}
               </span>
             </p>
-            <p>Books read: {levelInfo.booksRead}</p>
+            <p>{levelInfo.booksRead} books read</p>
             {levelInfo.booksToNextLevel !== null ? (
               <>
                 {(() => {

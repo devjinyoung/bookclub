@@ -4,12 +4,21 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { getProfileById } from '@/lib/profile';
 import { fetchBooksReadCount, getLevelInfo, type LevelInfo } from '@/lib/levels';
+import { supabaseBrowserClient } from '@/lib/supabaseClient';
+import { BookCard } from '@/components/BookCard';
 
 interface Profile {
   id: string;
   name: string;
   bio: string | null;
   avatar_url: string | null;
+}
+
+interface ReadBook {
+  id: string;
+  title: string;
+  author: string;
+  coverImageUrl: string | null;
 }
 
 export default function ProfilePage() {
@@ -22,6 +31,10 @@ export default function ProfilePage() {
 
   const [levelInfo, setLevelInfo] = useState<LevelInfo | null>(null);
   const [progressError, setProgressError] = useState<string | null>(null);
+
+  const [readBooks, setReadBooks] = useState<ReadBook[]>([]);
+  const [readBooksLoading, setReadBooksLoading] = useState(true);
+  const [readBooksError, setReadBooksError] = useState<string | null>(null);
 
   useEffect(() => {
     getProfileById(userId)
@@ -49,6 +62,50 @@ export default function ProfilePage() {
     loadProgress();
   }, [userId]);
 
+  useEffect(() => {
+    async function loadReadBooks() {
+      try {
+        const { data, error } = await supabaseBrowserClient
+          .from('reading_statuses')
+          .select(
+            `
+            book:books (
+              id,
+              title,
+              author,
+              cover_image_url
+            )
+          `,
+          )
+          .eq('user_id', userId)
+          .eq('status', 'read');
+
+        if (error) {
+          throw error;
+        }
+
+        const rows = (data ?? []) as any[];
+        const mapped: ReadBook[] = rows
+          .map((row) => row.book)
+          .filter(Boolean)
+          .map((book) => ({
+            id: book.id as string,
+            title: book.title as string,
+            author: book.author as string,
+            coverImageUrl: (book.cover_image_url as string | null | undefined) ?? null,
+          }));
+
+        setReadBooks(mapped);
+      } catch {
+        setReadBooksError('Unable to load books this member has read.');
+      } finally {
+        setReadBooksLoading(false);
+      }
+    }
+
+    loadReadBooks();
+  }, [userId]);
+
   const initials =
     profile?.name
       ?.split(' ')
@@ -73,7 +130,12 @@ export default function ProfilePage() {
                   <span>Bookworm</span>
                 </span>
               )}{' '}
-              {levelInfo.level === 'Scholar' && '📖 Scholar'}
+              {levelInfo.level === 'Scholar' && (
+                <span className="inline-flex items-center gap-1">
+                  <img src="/icons/book.png" alt="Scholar" className="h-6 w-6 invert mr-1" />
+                  <span>Scholar</span>
+                </span>
+              )}
               {levelInfo.level === 'Librarian' && '📚 Librarian'}
               {levelInfo.level === 'Shakespeare' && '✍️ Shakespeare'}
             </p>
@@ -82,7 +144,7 @@ export default function ProfilePage() {
       </header>
 
       <section className="space-y-2 rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm">
-        <h2 className="text-sm font-semibold text-slate-200">About</h2>
+        <h2 className="text-sm font-semibold text-slate-200">Bio</h2>
         {loading && <p className="text-slate-500">Loading profile…</p>}
         {error && <p className="text-red-400">{error}</p>}
         {!loading && !error && (
@@ -93,51 +155,43 @@ export default function ProfilePage() {
       </section>
 
       <section className="space-y-2 rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm">
-        <h2 className="text-sm font-semibold text-slate-200">Reading Progress</h2>
         {progressError && <p className="text-xs text-red-400">{progressError}</p>}
-        {!progressError && levelInfo && (
-          <div className="space-y-2 text-xs text-slate-300">
-            <p>Books read: {levelInfo.booksRead}</p>
-            {levelInfo.booksToNextLevel !== null ? (
-              <>
-                <p>
-                  {levelInfo.booksToNextLevel === 1
-                    ? '1 book away from the next level.'
-                    : `${levelInfo.booksToNextLevel} books away from the next level.`}
-                </p>
-                {(() => {
-                  let bandStart = 0;
-                  let bandEnd = 2;
-                  if (levelInfo.level === 'Scholar') {
-                    bandStart = 2;
-                    bandEnd = 4;
-                  } else if (levelInfo.level === 'Librarian') {
-                    bandStart = 4;
-                    bandEnd = 10;
-                  }
-                  const clampedBooks = Math.min(Math.max(levelInfo.booksRead, bandStart), bandEnd);
-                  const progress =
-                    bandEnd > bandStart ? (clampedBooks - bandStart) / (bandEnd - bandStart) : 0;
-                  const percent = Math.round(progress * 100);
-                  return (
-                    <div className="space-y-1">
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
-                        <div
-                          className="h-full rounded-full bg-sky-500 transition-[width]"
-                          style={{ width: `${percent}%` }}
-                        />
-                      </div>
-                      <p className="text-[11px] text-slate-500">
-                        {percent}% of this level completed.
-                      </p>
-                    </div>
-                  );
-                })()}
-              </>
-            ) : (
-              <p>You&apos;ve reached the highest level!</p>
-            )}
-          </div>
+        {levelInfo && levelInfo.booksToNextLevel !== null ? (
+          <>
+            <p></p>
+            {(() => {
+              let bandStart = 0;
+              let bandEnd = 2;
+              if (levelInfo.level === 'Scholar') {
+                bandStart = 2;
+                bandEnd = 4;
+              } else if (levelInfo.level === 'Librarian') {
+                bandStart = 4;
+                bandEnd = 10;
+              }
+              const clampedBooks = Math.min(Math.max(levelInfo.booksRead, bandStart), bandEnd);
+              const progress =
+                bandEnd > bandStart ? (clampedBooks - bandStart) / (bandEnd - bandStart) : 0;
+              const percent = Math.round(progress * 100);
+              return (
+                <div className="space-y-1">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                    <div
+                      className="h-full rounded-full bg-sky-500 transition-[width]"
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    {levelInfo.booksToNextLevel === 1
+                      ? '1 book away from the next level.'
+                      : `${levelInfo.booksToNextLevel} books away from the next level.`}
+                  </p>
+                </div>
+              );
+            })()}
+          </>
+        ) : (
+          <p>You&apos;ve reached the highest level!</p>
         )}
         {!progressError && !levelInfo && (
           <p className="text-xs text-slate-500">
@@ -146,8 +200,39 @@ export default function ProfilePage() {
         )}
       </section>
 
-      <section className="space-y-2 rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-400">
-        Reading history and nominations will be added in a later phase.
+      <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold text-slate-200">Books read</h2>
+          {readBooks.length > 0 && !readBooksLoading && (
+            <span className="text-[11px] text-slate-500">
+              {readBooks.length} {readBooks.length === 1 ? 'book' : 'books'}
+            </span>
+          )}
+        </div>
+
+        {readBooksLoading && <p className="text-xs text-slate-500">Loading reading history…</p>}
+
+        {readBooksError && <p className="text-xs text-red-400">{readBooksError}</p>}
+
+        {!readBooksLoading && !readBooksError && readBooks.length === 0 && (
+          <p className="text-xs text-slate-500">
+            When this member marks club books as read, they&apos;ll appear here.
+          </p>
+        )}
+
+        {!readBooksLoading && !readBooksError && readBooks.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {readBooks.map((book) => (
+              <BookCard
+                key={book.id}
+                title={book.title}
+                author={book.author}
+                coverImageUrl={book.coverImageUrl}
+                className="bg-slate-950/60"
+              />
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
