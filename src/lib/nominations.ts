@@ -80,22 +80,33 @@ export async function fetchNominationsWithVotes(): Promise<NominationWithMeta[]>
 }
 
 export async function ensureBookFromSearchPayload(book: SearchBookPayload): Promise<string> {
+  // First, see if the book is already cached.
+  const existing = await supabaseBrowserClient
+    .from('books')
+    .select('id')
+    .eq('google_books_id', book.googleBooksId)
+    .maybeSingle();
+
+  if (existing.error) {
+    throw existing.error;
+  }
+
+  if (existing.data) {
+    return existing.data.id as string;
+  }
+
+  // Otherwise, insert a new cached book record.
   const { data, error } = await supabaseBrowserClient
     .from('books')
-    .upsert(
-      {
-        google_books_id: book.googleBooksId,
-        title: book.title,
-        author: book.author,
-        cover_image_url: book.coverImageUrl,
-        genre: book.genre ?? null,
-        page_count: book.pageCount ?? null,
-        description: book.description ?? null,
-      },
-      {
-        onConflict: 'google_books_id',
-      },
-    )
+    .insert({
+      google_books_id: book.googleBooksId,
+      title: book.title,
+      author: book.author,
+      cover_image_url: book.coverImageUrl,
+      genre: book.genre ?? null,
+      page_count: book.pageCount ?? null,
+      description: book.description ?? null,
+    })
     .select('id')
     .single();
 

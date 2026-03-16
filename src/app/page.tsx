@@ -25,11 +25,6 @@ export default function DashboardPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const [userStatus, setUserStatus] = useState<ReadingStatus | 'not_started'>('not_started');
-  const [statusCounts, setStatusCounts] = useState<{
-    reading: number;
-    read: number;
-    not_started: number;
-  }>({ reading: 0, read: 0, not_started: 0 });
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -60,7 +55,6 @@ export default function DashboardPage() {
         if (data.user && book) {
           const summary = await fetchCurrentBookStatusSummary(data.user.id, book.book_id);
           setUserStatus(summary.userStatus);
-          setStatusCounts(summary.counts);
         }
       } catch {
         setCurrentBookError('Unable to load current book.');
@@ -158,43 +152,37 @@ export default function DashboardPage() {
                   </p>
                 </div>
                 {currentBook && (
-                  <>
-                    <div className="text-[11px]">
-                      <label htmlFor="current-book-status" className="mb-1 block text-slate-400">
-                        Your status
-                      </label>
-                      <select
-                        id="current-book-status"
-                        disabled={!currentUserId || updatingStatus}
-                        value={userStatus}
-                        onChange={async (e) => {
-                          if (!currentUserId || !currentBook) return;
-                          const next = e.target.value as ReadingStatus | 'not_started';
+                  <div className="text-[11px]">
+                    <label htmlFor="current-book-status" className="mb-1 block text-slate-400">
+                      Your status
+                    </label>
+                    <select
+                      id="current-book-status"
+                      disabled={!currentUserId || updatingStatus}
+                      value={userStatus}
+                      onChange={async (e) => {
+                        if (!currentUserId || !currentBook) return;
+                        const next = e.target.value as ReadingStatus | 'not_started';
 
-                          setUpdatingStatus(true);
-                          try {
-                            await updateCurrentBookStatus(currentUserId, currentBook.book_id, next);
-                            const summary = await fetchCurrentBookStatusSummary(
-                              currentUserId,
-                              currentBook.book_id,
-                            );
-                            setUserStatus(summary.userStatus);
-                            setStatusCounts(summary.counts);
-                          } finally {
-                            setUpdatingStatus(false);
-                          }
-                        }}
-                        className="w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-50 outline-none ring-0 ring-sky-500 focus:border-sky-500 focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        <option value="not_started">Not Started</option>
-                        <option value="reading">Reading</option>
-                        <option value="read">Read</option>
-                      </select>
-                    </div>
-                    <p className="text-xs text-slate-500">
-                      {statusCounts.read} Read · {statusCounts.reading} Reading
-                    </p>
-                  </>
+                        setUpdatingStatus(true);
+                        try {
+                          await updateCurrentBookStatus(currentUserId, currentBook.book_id, next);
+                          const summary = await fetchCurrentBookStatusSummary(
+                            currentUserId,
+                            currentBook.book_id,
+                          );
+                          setUserStatus(summary.userStatus);
+                        } finally {
+                          setUpdatingStatus(false);
+                        }
+                      }}
+                      className="w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-50 outline-none ring-0 ring-sky-500 focus:border-sky-500 focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <option value="not_started">Not Started</option>
+                      <option value="reading">Reading</option>
+                      <option value="read">Read</option>
+                    </select>
+                  </div>
                 )}
               </>
             )}
@@ -268,7 +256,12 @@ export default function DashboardPage() {
                     <span>Bookworm</span>
                   </>
                 )}
-                {levelInfo.level === 'Scholar' && '📖 Scholar'}
+                {levelInfo.level === 'Scholar' && (
+                  <>
+                    <img src="/icons/book.png" alt="Scholar" className="h-6 w-6 invert mx-1" />
+                    <span>Scholar</span>
+                  </>
+                )}
                 {levelInfo.level === 'Librarian' && '📚 Librarian'}
                 {levelInfo.level === 'Shakespeare' && '✍️ Shakespeare'}
               </span>
@@ -433,8 +426,7 @@ export default function DashboardPage() {
             </div>
 
             <p className="text-xs text-slate-500">
-              Search for a book using Google Books, then select it to make it the club&apos;s
-              current read.
+              Search for a book, then select it to make it the club&apos;s current read.
             </p>
 
             <BookSearch onSelect={setSelectedBook} />
