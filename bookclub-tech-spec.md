@@ -64,11 +64,12 @@ Extends Supabase's built-in `auth.users` table.
 
 | Column | Type | Notes |
 |---|---|---|
-| id | uuid | Foreign key → `auth.users.id` |
+| id | uuid | Foreign key → `auth.users.id` ON DELETE CASCADE |
 | name | text | Display name |
 | avatar_url | text | Nullable — URL to uploaded image |
 | bio | text | Nullable — short bio |
 | created_at | timestamptz | Auto |
+| updated_at | timestamptz | Auto — updated on any profile field change |
 
 ### `books`
 A local cache of book data pulled from the Google Books API. Prevents redundant API calls.
@@ -91,8 +92,8 @@ Stores the club's current monthly read. Enforced to contain exactly one row at a
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid | Primary key |
-| book_id | uuid | Foreign key → `books.id` |
-| set_by | uuid | Foreign key → `profiles.id` |
+| book_id | uuid | Foreign key → `books.id` RESTRICT |
+| set_by | uuid | Foreign key → `profiles.id` SET NULL |
 | set_at | timestamptz | Auto |
 | singleton | boolean | Always `true` — enforces single-row constraint |
 
@@ -108,10 +109,12 @@ A record of every book that was previously the club's current book.
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid | Primary key |
-| book_id | uuid | Foreign key → `books.id` |
-| month | integer | 1–12 |
-| year | integer | e.g. 2026 |
+| book_id | uuid | Foreign key → `books.id` RESTRICT |
+| month | integer | 1–12 — extracted from `current_book.set_at` of the outgoing book |
+| year | integer | e.g. 2026 — extracted from `current_book.set_at` of the outgoing book |
 | archived_at | timestamptz | Auto |
+
+**Month/year source:** When a new current book is set, the outgoing book is archived using the `month` and `year` from `current_book.set_at` (the timestamp when the outgoing book was originally set as current) — not the current date at the time of archiving. This ensures the archive reflects when the club was actually reading the book. For example, if the March book was set on Feb 28, the archive entry stores month=2, year=2026. This is handled automatically by a Postgres trigger (see Section 10).
 
 ### `reading_statuses`
 Tracks each member's reading progress for club books (current book and archived books only).
@@ -119,10 +122,11 @@ Tracks each member's reading progress for club books (current book and archived 
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid | Primary key |
-| user_id | uuid | Foreign key → `profiles.id` |
-| book_id | uuid | Foreign key → `books.id` |
+| user_id | uuid | Foreign key → `profiles.id` ON DELETE CASCADE |
+| book_id | uuid | Foreign key → `books.id` RESTRICT |
 | status | enum | `reading` \| `read` |
-| updated_at | timestamptz | Auto |
+| created_at | timestamptz | Auto — when the member first logged a status for this book |
+| updated_at | timestamptz | Auto — updated on every status change |
 
 **Constraints:** Unique on `(user_id, book_id)`.
 
@@ -136,16 +140,19 @@ Books nominated by members for future club reads. Once submitted, nominations ar
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid | Primary key |
-| book_id | uuid | Foreign key → `books.id` |
-| nominated_by | uuid | Foreign key → `profiles.id` |
+| book_id | uuid | Foreign key → `books.id` RESTRICT |
+| nominated_by | uuid | Foreign key → `profiles.id` SET NULL |
 | pitch | text | Short pitch from the nominator — editable after submission |
 | created_at | timestamptz | Auto |
 | updated_at | timestamptz | Auto — updated when pitch is edited |
 
 **Constraints:**
 - Unique on `book_id` — prevents duplicate nominations of the same book
+- `CHECK (char_length(pitch) <= 500)` — pitch capped at 500 characters
 - A book that exists in `archived_books` cannot be nominated (enforced at the application layer before insert)
 - No user-initiated deletion — nominations are only removed by the system when a book becomes the current book
+
+**Note on `nominated_by` SET NULL:** If a member's profile is ever deleted, their nominations remain on the list (the community voted for them) but the nominator name will render as "Unknown member."
 
 ### `votes`
 Upvotes on nominations.
@@ -154,7 +161,7 @@ Upvotes on nominations.
 |---|---|---|
 | id | uuid | Primary key |
 | nomination_id | uuid | Foreign key → `nominations.id` ON DELETE CASCADE |
-| user_id | uuid | Foreign key → `profiles.id` |
+| user_id | uuid | Foreign key → `profiles.id` ON DELETE CASCADE |
 | created_at | timestamptz | Auto |
 
 **Constraints:** Unique on `(nomination_id, user_id)` — one vote per user per nomination.
@@ -164,7 +171,11 @@ Upvotes on nominations.
 auth.uid() != (SELECT nominated_by FROM nominations WHERE id = nomination_id)
 ```
 
-**Cascade:** `ON DELETE CASCADE` on `nomination_id` — when a nomination is removed (system action when becoming current book), all its votes are automatically deleted.
+**Cascade on `nomination_id`:** When a nomination is removed (system action when it becomes the current book), all its votes are automatically deleted.
+
+**Cascade on `user_id`:** When a member's profile is deleted, their votes are automatically deleted.
+
+**Vote count computation:** Vote counts displayed on nomination cards are computed at query time via a COUNT subquery — no denormalized counter column is maintained. Counts are kept live via a Supabase Realtime subscription on the `votes` table. For ≤30 members this is performant without any extra complexity.
 
 ### `activity_log`
 Drives the activity feed on the Dashboard. Only three event types are tracked.
@@ -172,17 +183,61 @@ Drives the activity feed on the Dashboard. Only three event types are tracked.
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid | Primary key |
-| user_id | uuid | Foreign key → `profiles.id` — who performed the action |
+| user_id | uuid | Foreign key → `profiles.id` SET NULL — who performed the action |
 | action_type | enum | `book_read` \| `book_nominated` \| `current_book_changed` |
-| metadata | jsonb | e.g. `{ "book_title": "Dune", "book_id": "..." }` |
+| metadata | jsonb | Event-specific payload — shape defined per event type below |
 | created_at | timestamptz | Auto |
 
-**Events logged:**
-- `book_read` — triggered only when a member updates the reading status of the **current book** to `read`
-- `book_nominated` — triggered when a new nomination is submitted
-- `current_book_changed` — triggered when any member sets a new current book
+**Insert mechanism:** All activity log entries are written by Postgres triggers, never directly by the client. This means the client writes to `reading_statuses`, `nominations`, and `current_book` as normal — the triggers fire automatically server-side and insert into `activity_log`. No API routes or service role key are required for activity logging. Full trigger SQL is in Section 10.
+
+**Events logged and their metadata shapes:**
+
+`book_read` — fires when a member sets the **current book's** reading status to `read`:
+```json
+{ "book_id": "...", "book_title": "..." }
+```
+
+`book_nominated` — fires when a new nomination is inserted:
+```json
+{ "book_id": "...", "book_title": "...", "nomination_id": "..." }
+```
+
+`current_book_changed` — fires when the current book row is updated:
+```json
+{
+  "new_book_id": "...",
+  "new_book_title": "...",
+  "previous_book_id": "...",
+  "previous_book_title": "..."
+}
+```
 
 Reading status updates on **archived books** do not generate activity log entries.
+
+---
+
+### Indexes
+
+Primary keys and unique constraints are indexed automatically by Postgres. The following additional indexes should be created to support the app's most common queries:
+
+```sql
+-- Profile lookups by reading status (gamification level queries, profile page)
+CREATE INDEX idx_reading_statuses_user_id ON reading_statuses (user_id);
+
+-- Reading status breakdown per book (dashboard member status counts)
+CREATE INDEX idx_reading_statuses_book_id ON reading_statuses (book_id);
+
+-- Nomination lookup by book (duplicate/archived book check before nominating)
+CREATE INDEX idx_nominations_book_id ON nominations (book_id);
+
+-- Vote counts per nomination (nominations page sort)
+CREATE INDEX idx_votes_nomination_id ON votes (nomination_id);
+
+-- Activity feed (always fetched in descending order)
+CREATE INDEX idx_activity_log_created_at ON activity_log (created_at DESC);
+```
+
+For a club of ≤30 members these indexes are not strictly required for performance, but they represent correct query patterns and are cheap to add upfront.
 
 ---
 
@@ -555,19 +610,149 @@ CREATE TRIGGER on_auth_user_created
 
 **profiles** — Anyone (authenticated) can read. Only the owner can update.
 
-**books** — Anyone (authenticated) can read. Authenticated users can insert (for caching).
+**books** — Anyone (authenticated) can read. Authenticated users can insert (use upsert with `onConflict: 'google_books_id'` to handle duplicate caching gracefully).
 
-**current_book** — Anyone (authenticated) can read. Any authenticated user can update (never insert after initial setup).
+**current_book** — Anyone (authenticated) can read. Any authenticated user can insert or update (insert for the first-ever current book; update for all subsequent changes).
 
-**archived_books** — Anyone (authenticated) can read. Insert only via service role (server-side).
+**archived_books** — Anyone (authenticated) can read. No direct client insert — written exclusively by the `on_current_book_updated` trigger (runs as `SECURITY DEFINER`).
 
 **reading_statuses** — Anyone (authenticated) can read. Owner can insert, update, and delete their own records only.
 
-**nominations** — Anyone (authenticated) can read. Authenticated users can insert. Owner can update `pitch` only (no delete by users). Delete only via service role (system action when current book is set).
+**nominations** — Anyone (authenticated) can read. Authenticated users can insert. Owner can update `pitch` only (no user-initiated delete). Deletion only via the `on_current_book_updated` trigger when the nominated book becomes the current book.
 
-**votes** — Anyone (authenticated) can read. Authenticated users can insert their own vote if they did not create the nomination. Users can delete their own vote.
+**votes** — Anyone (authenticated) can read. Authenticated users can insert their own vote, provided they did not create the nomination. Users can delete their own vote.
 
-**activity_log** — Anyone (authenticated) can read. Insert only via service role (never directly from client).
+**activity_log** — Anyone (authenticated) can read. No direct client insert — written exclusively by Postgres triggers (all run as `SECURITY DEFINER`).
+
+### Postgres Triggers
+
+Three triggers handle all server-side automation: archiving, nomination cleanup, and activity logging. No API routes or service role key are needed for these operations.
+
+---
+
+**Trigger 1 — Archive previous book + remove nomination when current book changes**
+
+Fires `AFTER UPDATE` on `current_book`. Handles two things atomically: archives the outgoing book using `set_at`'s month/year, and deletes any nomination for the incoming book.
+
+```sql
+CREATE OR REPLACE FUNCTION handle_current_book_updated()
+RETURNS trigger AS $$
+BEGIN
+  -- Archive the outgoing book using the month/year it was set as current
+  IF OLD.book_id IS NOT NULL THEN
+    INSERT INTO archived_books (book_id, month, year)
+    VALUES (
+      OLD.book_id,
+      EXTRACT(MONTH FROM OLD.set_at)::integer,
+      EXTRACT(YEAR FROM OLD.set_at)::integer
+    );
+  END IF;
+
+  -- Remove nomination for the incoming book if one exists (cascades votes)
+  DELETE FROM nominations WHERE book_id = NEW.book_id;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_current_book_updated
+  AFTER UPDATE ON current_book
+  FOR EACH ROW EXECUTE PROCEDURE handle_current_book_updated();
+```
+
+---
+
+**Trigger 2 — Log activity when current book changes**
+
+Fires `AFTER UPDATE` on `current_book`.
+
+```sql
+CREATE OR REPLACE FUNCTION log_current_book_changed()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO activity_log (user_id, action_type, metadata)
+  VALUES (
+    NEW.set_by,
+    'current_book_changed',
+    jsonb_build_object(
+      'new_book_id',        NEW.book_id,
+      'new_book_title',     (SELECT title FROM books WHERE id = NEW.book_id),
+      'previous_book_id',   OLD.book_id,
+      'previous_book_title',(SELECT title FROM books WHERE id = OLD.book_id)
+    )
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_current_book_changed
+  AFTER UPDATE ON current_book
+  FOR EACH ROW EXECUTE PROCEDURE log_current_book_changed();
+```
+
+---
+
+**Trigger 3 — Log activity when a nomination is submitted**
+
+Fires `AFTER INSERT` on `nominations`.
+
+```sql
+CREATE OR REPLACE FUNCTION log_book_nominated()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO activity_log (user_id, action_type, metadata)
+  VALUES (
+    NEW.nominated_by,
+    'book_nominated',
+    jsonb_build_object(
+      'book_id',       NEW.book_id,
+      'book_title',    (SELECT title FROM books WHERE id = NEW.book_id),
+      'nomination_id', NEW.id
+    )
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_nomination_created
+  AFTER INSERT ON nominations
+  FOR EACH ROW EXECUTE PROCEDURE log_book_nominated();
+```
+
+---
+
+**Trigger 4 — Log activity when the current book is marked as read**
+
+Fires `AFTER INSERT OR UPDATE` on `reading_statuses`. Only logs if the status is changing TO `read` AND the book is the current book (not an archived book).
+
+```sql
+CREATE OR REPLACE FUNCTION log_book_read()
+RETURNS trigger AS $$
+BEGIN
+  IF NEW.status = 'read'
+     AND (OLD IS NULL OR OLD.status != 'read')
+     AND NEW.book_id = (SELECT book_id FROM current_book LIMIT 1)
+  THEN
+    INSERT INTO activity_log (user_id, action_type, metadata)
+    VALUES (
+      NEW.user_id,
+      'book_read',
+      jsonb_build_object(
+        'book_id',    NEW.book_id,
+        'book_title', (SELECT title FROM books WHERE id = NEW.book_id)
+      )
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_reading_status_read
+  AFTER INSERT OR UPDATE ON reading_statuses
+  FOR EACH ROW EXECUTE PROCEDURE log_book_read();
+```
+
+---
 
 ### Realtime
 Enable Supabase Realtime on:

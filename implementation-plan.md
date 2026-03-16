@@ -18,9 +18,21 @@
   - Create shared Supabase client helper in `src/lib/supabaseClient.ts`.
 
 - **P1.3 Database schema & RLS**
-  - Create tables: `profiles`, `books`, `current_book`, `archived_books`, `reading_statuses`, `nominations`, `votes`, `activity_log`.
-  - Add singleton constraint for `current_book`.
+  - Create tables with constraints and FKs as per spec:
+    - `profiles` (with `updated_at` and `ON DELETE CASCADE` from `auth.users`).
+    - `books` (unique `google_books_id`).
+    - `current_book` (singleton constraint, `book_id` RESTRICT, `set_by` SET NULL).
+    - `archived_books` (`book_id` RESTRICT, `month`/`year` from `current_book.set_at`).
+    - `reading_statuses` (`user_id` ON DELETE CASCADE, `book_id` RESTRICT, status check + unique `(user_id, book_id)` and created/updated timestamps).
+    - `nominations` (`book_id` RESTRICT, `nominated_by` SET NULL, pitch length check, unique `book_id`).
+    - `votes` (`nomination_id` ON DELETE CASCADE, `user_id` ON DELETE CASCADE, unique `(nomination_id, user_id)`).
+    - `activity_log` (`user_id` SET NULL, enum-like `action_type`, typed `metadata`).
+  - Add singleton constraint for `current_book.singleton`.
   - Implement trigger to auto-create `profiles` on new auth user.
+  - Implement Postgres triggers to:
+    - Archive outgoing current book + clean up nominations on `current_book` update.
+    - Insert `activity_log` entries for `current_book_changed`, `book_nominated`, and `book_read` events.
+  - Create helpful indexes (`reading_statuses` user/book, `nominations.book_id`, `votes.nomination_id`, `activity_log.created_at DESC`).
   - Configure RLS policies as per spec.
   - Create `avatars` storage bucket with public read, authenticated write.
 
@@ -120,7 +132,7 @@
   - Show modal with new level, message, and dismiss button.
 
 - **P5.4 Activity feed**
-  - Insert `activity_log` entries using service role (server-side only) for:
+  - Rely on Postgres triggers (running as `SECURITY DEFINER`) to insert `activity_log` entries for:
     - `book_read` (current book marked as read).
     - `book_nominated`.
     - `current_book_changed`.
