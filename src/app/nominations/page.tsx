@@ -1,29 +1,142 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BookSearch } from "@/components/BookSearch";
+import { BookSearch, type BookSearchResult } from "@/components/BookSearch";
 import {
+  createNominationFromSearchPayload,
   fetchNominationsWithVotes,
-  type NominationWithMeta
+  fetchUserVoteNominationIds,
+  toggleVote,
+  type NominationWithMeta,
 } from "@/lib/nominations";
+import { getCurrentUser } from "@/lib/profile";
+
+// TODO (P4.2.c): Add Supabase Realtime subscriptions on `nominations` and
+// `votes` to keep vote counts and list ordering in sync across clients.
 
 export default function NominationsPage() {
   const [nominations, setNominations] = useState<NominationWithMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [votedIds, setVotedIds] = useState<Set<string>>(new Set());
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [isNominateOpen, setIsNominateOpen] = useState(false);
+  const [selectedBook, setSelectedBook] = useState<BookSearchResult | null>(
+    null,
+  );
+  const [pitch, setPitch] = useState("");
+  const [nominateError, setNominateError] = useState<string | null>(null);
+  const [nominateLoading, setNominateLoading] = useState(false);
 
   useEffect(() => {
-    fetchNominationsWithVotes()
-      .then((data) => {
-        setNominations(data);
-      })
-      .catch(() => {
+    async function load() {
+      try {
+        const [{ data }, nominationsData] = await Promise.all([
+          getCurrentUser(),
+          fetchNominationsWithVotes(),
+        ]);
+
+        if (data.user) {
+          setCurrentUserId(data.user.id);
+          const userVoteIds = await fetchUserVoteNominationIds(data.user.id);
+          setVotedIds(new Set(userVoteIds));
+        }
+
+        setNominations(nominationsData);
+      } catch {
         setError("Unable to load nominations.");
-      })
-      .finally(() => {
+      } finally {
         setLoading(false);
+      }
+    }
+
+    load();
+  }, []);
+
+  async function handleToggleVote(nomination: NominationWithMeta) {
+    if (!currentUserId) return;
+
+    const hasVoted = votedIds.has(nomination.id);
+
+    setUpdatingId(nomination.id);
+    try {
+      await toggleVote(nomination.id, hasVoted, currentUserId);
+
+      const nextVoted = new Set(votedIds);
+      if (hasVoted) {
+        nextVoted.delete(nomination.id);
+      } else {
+        nextVoted.add(nomination.id);
+      }
+      setVotedIds(nextVoted);
+
+      setNominations((prev) => {
+        const updated = prev.map((n) =>
+          n.id === nomination.id
+            ? {
+                ...n,
+                vote_count: n.vote_count + (hasVoted ? -1 : 1),
+              }
+            : n,
+        );
+        return [...updated].sort((a, b) => b.vote_count - a.vote_count);
       });
-  }, [])
+    } catch {
+      // Could surface error to user later.
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  async function handleCreateNomination() {
+    if (!currentUserId) {
+      setNominateError("You must be logged in to nominate a book.");
+      return;
+    }
+    if (!selectedBook) {
+      setNominateError("Please select a book first.");
+      return;
+    }
+    if (!pitch.trim()) {
+      setNominateError("Please add a short pitch for this book.");
+      return;
+    }
+    if (pitch.length > 500) {
+      setNominateError("Pitch must be 500 characters or less.");
+      return;
+    }
+
+    setNominateLoading(true);
+    setNominateError(null);
+
+    try {
+      const created = await createNominationFromSearchPayload(
+        {
+          googleBooksId: selectedBook.googleBooksId,
+          title: selectedBook.title,
+          author: selectedBook.author,
+          coverImageUrl: selectedBook.coverImageUrl,
+        },
+        pitch.trim(),
+        currentUserId,
+      );
+
+      setNominations((prev) =>
+        [...prev, created].sort((a, b) => b.vote_count - a.vote_count),
+      );
+      setIsNominateOpen(false);
+      setSelectedBook(null);
+      setPitch("");
+    } catch (err: any) {
+      setNominateError(
+        err.message ??
+          "Something went wrong while creating the nomination.",
+      );
+    } finally {
+      setNominateLoading(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -35,17 +148,6 @@ export default function NominationsPage() {
       </header>
 
       <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-        <h2 className="text-sm font-semibold text-slate-200">
-          Search for a book
-        </h2>
-        <p className="text-xs text-slate-500">
-          This search uses the Google Books API. We&apos;ll reuse this in the
-          &quot;Nominate a Book&quot; and &quot;Set Current Book&quot; flows.
-        </p>
-        <BookSearch />
-      </section>
-
-      <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-200">
             Nominations
@@ -54,6 +156,24 @@ export default function NominationsPage() {
             Sorted by votes (desc)
           </span>
         </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            setNominateError(null);
+            setIsNominateOpen(true);
+          }}
+          disabled={!currentUserId}
+          className="inline-flex items-center rounded-md bg-sky-500 px-3 py-1.5 text-xs font-medium text-slate-950 hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Nominate a Book
+        </button>
+
+        {!currentUserId && (
+          <p className="text-[11px] text-slate-500">
+            Log in to nominate books and vote on future reads.
+          </p>
+        )}
 
         {loading && (
           <p className="text-xs text-slate-500">Loading nominations…</p>
@@ -97,12 +217,114 @@ export default function NominationsPage() {
                     Nominated by{" "}
                     {nomination.nominator?.name ?? "Unknown member"}
                   </p>
+                  <div className="mt-2 flex items-center justify-between">
+                    <button
+                      type="button"
+                      disabled={
+                        !currentUserId ||
+                        nomination.nominator?.id === currentUserId ||
+                        updatingId === nomination.id
+                      }
+                      onClick={() => handleToggleVote(nomination)}
+                      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] transition-colors ${
+                        votedIds.has(nomination.id)
+                          ? "border-sky-500 bg-sky-500/10 text-sky-300"
+                          : "border-slate-700 text-slate-300 hover:border-sky-500 hover:text-sky-300"
+                      } disabled:cursor-not-allowed disabled:opacity-50`}
+                    >
+                      <span>⬆</span>
+                      <span>
+                        {votedIds.has(nomination.id) ? "Voted" : "Vote"}
+                      </span>
+                    </button>
+                    {nomination.nominator?.id === currentUserId && (
+                      <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[11px] text-slate-300">
+                        Your nomination
+                      </span>
+                    )}
+                  </div>
                 </div>
               </li>
             ))}
           </ul>
         )}
       </section>
+
+      {isNominateOpen && (
+        <div className="fixed inset-0 z-20 flex items-end justify-center bg-black/60 px-4 pb-6">
+          <div className="w-full max-w-md space-y-3 rounded-2xl border border-slate-800 bg-slate-950 p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-slate-200">
+                Nominate a Book
+              </h2>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!nominateLoading) {
+                    setIsNominateOpen(false);
+                    setSelectedBook(null);
+                    setPitch("");
+                    setNominateError(null);
+                  }
+                }}
+                className="text-xs text-slate-400 hover:text-slate-200"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs text-slate-500">
+                Search for a book, select it, then share a short pitch about why
+                the club should read it (max 500 characters).
+              </p>
+              <BookSearch onSelect={setSelectedBook} />
+              {selectedBook && (
+                <div className="rounded-md border border-slate-800 bg-slate-900/60 p-2 text-xs text-slate-300">
+                  <p className="font-medium">{selectedBook.title}</p>
+                  <p className="text-[11px] text-slate-500">
+                    {selectedBook.author}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <label
+                htmlFor="pitch"
+                className="text-xs font-medium text-slate-200"
+              >
+                Pitch
+              </label>
+              <textarea
+                id="pitch"
+                rows={3}
+                maxLength={500}
+                value={pitch}
+                onChange={(e) => setPitch(e.target.value)}
+                className="w-full resize-none rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-50 outline-none ring-0 ring-sky-500 focus:border-sky-500 focus:ring-1"
+                placeholder="Why should the club read this?"
+              />
+              <p className="text-[10px] text-slate-500">
+                {pitch.length}/500 characters
+              </p>
+            </div>
+
+            {nominateError && (
+              <p className="text-xs text-red-400">{nominateError}</p>
+            )}
+
+            <button
+              type="button"
+              onClick={handleCreateNomination}
+              disabled={nominateLoading}
+              className="inline-flex w-full items-center justify-center rounded-md bg-sky-500 px-3 py-2 text-sm font-medium text-slate-950 hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {nominateLoading ? "Submitting…" : "Submit nomination"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

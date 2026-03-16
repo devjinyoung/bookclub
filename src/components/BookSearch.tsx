@@ -1,13 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import type { SearchBookPayload } from "@/lib/nominations";
 
-interface BookSearchResult {
-  googleBooksId: string;
-  title: string;
-  author: string;
-  coverImageUrl: string | null;
-}
+export interface BookSearchResult extends SearchBookPayload {}
 
 interface BookSearchProps {
   onSelect?(book: BookSearchResult): void;
