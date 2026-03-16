@@ -15,6 +15,7 @@ const tabs: Tab[] = [
   { href: '/', label: 'Home', icon: 'home.png' },
   { href: '/nominations', label: 'Books', icon: 'star.png' },
   { href: '/members', label: 'Members', icon: 'cat.png' },
+  { href: '/archive', label: 'Archives', icon: 'menus.png' },
 ];
 
 export function BottomNav() {

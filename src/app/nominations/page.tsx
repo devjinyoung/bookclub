@@ -26,6 +26,7 @@ export default function NominationsPage() {
   const [pitch, setPitch] = useState('');
   const [nominateError, setNominateError] = useState<string | null>(null);
   const [nominateLoading, setNominateLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     async function load() {
@@ -131,21 +132,23 @@ export default function NominationsPage() {
     }
   }
 
+  const filteredNominations = nominations.filter((nomination) => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return true;
+
+    const title = nomination.book.title?.toLowerCase() ?? '';
+    const author = nomination.book.author?.toLowerCase() ?? '';
+
+    return title.includes(query) || author.includes(query);
+  });
+
   return (
     <div className="space-y-6">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Nominations</h1>
-        <p className="mt-1 text-sm text-slate-400">
+        <p className="mt-1 mb-3 text-sm text-slate-400">
           Discover, nominate, and vote on future club reads.
         </p>
-      </header>
-
-      <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-200">Nominations</h2>
-          <span className="text-xs text-slate-500">Sorted by votes (desc)</span>
-        </div>
-
         <button
           type="button"
           onClick={() => {
@@ -153,10 +156,28 @@ export default function NominationsPage() {
             setIsNominateOpen(true);
           }}
           disabled={!currentUserId}
-          className="inline-flex items-center rounded-md bg-sky-500 px-3 py-1.5 text-xs font-medium text-slate-950 hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center justify-center rounded-md bg-sky-500 px-3 py-1.5 text-xs font-medium text-slate-950 hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Nominate a Book
+          Nominate a Book +
         </button>
+      </header>
+
+      <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+        <div className="flex  gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex-1">
+            <label htmlFor="nominations-search" className="sr-only">
+              Search nominated books
+            </label>
+            <input
+              id="nominations-search"
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by title or author..."
+              className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-50 outline-none ring-0 ring-sky-500 placeholder:text-slate-500 focus:border-sky-500 focus:ring-1"
+            />
+          </div>
+        </div>
 
         {!currentUserId && (
           <p className="text-[11px] text-slate-500">
@@ -175,68 +196,76 @@ export default function NominationsPage() {
         )}
 
         {!loading && !error && nominations.length > 0 && (
-          <ul className="space-y-3">
-            {nominations.map((nomination) => (
-              <li
-                key={nomination.id}
-                className="flex gap-3 rounded-lg border border-slate-800 bg-slate-950/40 p-3"
-              >
-                <div className="flex h-16 w-12 items-center justify-center overflow-hidden rounded-md bg-slate-800 text-[10px] text-slate-500">
-                  {nomination.book.cover_image_url ? (
-                    <img
-                      src={nomination.book.cover_image_url}
-                      alt={`Cover of ${nomination.book.title}`}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <span>No cover</span>
-                  )}
-                </div>
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-medium text-slate-200">{nomination.book.title}</p>
-                      <p className="text-xs text-slate-500">{nomination.book.author}</p>
+          <>
+            {filteredNominations.length === 0 ? (
+              <p className="text-xs text-slate-500">No nominations match your search.</p>
+            ) : (
+              <ul className="space-y-3">
+                {filteredNominations.map((nomination) => (
+                  <li
+                    key={nomination.id}
+                    className="flex gap-3 rounded-lg border border-slate-800 bg-slate-950/40 p-3"
+                  >
+                    <div className="flex h-16 w-12 items-center justify-center overflow-hidden rounded-md bg-slate-800 text-[10px] text-slate-500">
+                      {nomination.book.cover_image_url ? (
+                        <img
+                          src={nomination.book.cover_image_url}
+                          alt={`Cover of ${nomination.book.title}`}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span>No cover</span>
+                      )}
                     </div>
-                    <div className="rounded-full bg-slate-800 px-2 py-0.5 text-[11px] text-slate-300 whitespace-nowrap">
-                      {nomination.vote_count} vote
-                      {nomination.vote_count === 1 ? '' : 's'}
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-300">{nomination.pitch}</p>
-                  {nomination.nominator?.id !== currentUserId && (
-                    <>
-                      <p className="text-[11px] text-slate-500">
-                        Nominated by {nomination.nominator?.name ?? 'Unknown member'}
-                      </p>
-                      <div className="mt-2 flex items-center justify-between">
-                        <button
-                          type="button"
-                          disabled={!currentUserId || updatingId === nomination.id}
-                          onClick={() => handleToggleVote(nomination)}
-                          className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] transition-colors ${
-                            votedIds.has(nomination.id)
-                              ? 'border-sky-500 bg-sky-500/10 text-sky-300'
-                              : 'border-slate-700 text-slate-300 hover:border-sky-500 hover:text-sky-300'
-                          } disabled:cursor-not-allowed disabled:opacity-50`}
-                        >
-                          <span>⬆</span>
-                          <span>{votedIds.has(nomination.id) ? 'Voted' : 'Vote'}</span>
-                        </button>
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-medium text-slate-200">
+                            {nomination.book.title}
+                          </p>
+                          <p className="text-xs text-slate-500">{nomination.book.author}</p>
+                        </div>
+                        <div className="rounded-full bg-slate-800 px-2 py-0.5 text-[11px] text-slate-300 whitespace-nowrap">
+                          {nomination.vote_count} vote
+                          {nomination.vote_count === 1 ? '' : 's'}
+                        </div>
                       </div>
-                    </>
-                  )}
-                  {nomination.nominator?.id === currentUserId && (
-                    <div className="mt-2 flex justify-end">
-                      <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[11px] text-slate-300">
-                        Your nomination
-                      </span>
+                      <p className="text-xs text-slate-300">{nomination.pitch}</p>
+                      {nomination.nominator?.id !== currentUserId && (
+                        <>
+                          <p className="text-[11px] text-slate-500">
+                            Nominated by {nomination.nominator?.name ?? 'Unknown member'}
+                          </p>
+                          <div className="mt-2 flex items-center justify-between">
+                            <button
+                              type="button"
+                              disabled={!currentUserId || updatingId === nomination.id}
+                              onClick={() => handleToggleVote(nomination)}
+                              className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] transition-colors ${
+                                votedIds.has(nomination.id)
+                                  ? 'border-sky-500 bg-sky-500/10 text-sky-300'
+                                  : 'border-slate-700 text-slate-300 hover:border-sky-500 hover:text-sky-300'
+                              } disabled:cursor-not-allowed disabled:opacity-50`}
+                            >
+                              <span>⬆</span>
+                              <span>{votedIds.has(nomination.id) ? 'Voted' : 'Vote'}</span>
+                            </button>
+                          </div>
+                        </>
+                      )}
+                      {nomination.nominator?.id === currentUserId && (
+                        <div className="mt-2 flex justify-end">
+                          <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[11px] text-slate-300">
+                            Your nomination
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
         )}
       </section>
 

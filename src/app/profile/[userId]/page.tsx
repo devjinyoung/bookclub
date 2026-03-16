@@ -116,45 +116,46 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-4">
-      <header className="flex items-center gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-500 text-base font-semibold text-slate-950">
-          {initials}
-        </div>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{profile?.name ?? 'Member'}</h1>
-          {levelInfo && (
-            <p className="mt-1 text-xs text-slate-400">
-              {levelInfo.level === 'Bookworm' && (
-                <span className="inline-flex items-center gap-1">
-                  <img src="/icons/bookworm.png" alt="Bookworm" className="h-6 w-6 invert mr-1" />
-                  <span>Bookworm</span>
-                </span>
-              )}{' '}
-              {levelInfo.level === 'Scholar' && (
-                <span className="inline-flex items-center gap-1">
-                  <img src="/icons/book.png" alt="Scholar" className="h-6 w-6 invert mr-1" />
-                  <span>Scholar</span>
-                </span>
-              )}
-              {levelInfo.level === 'Librarian' && '📚 Librarian'}
-              {levelInfo.level === 'Shakespeare' && '✍️ Shakespeare'}
+      <header className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-500 text-base font-semibold text-slate-950">
+            {initials}
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">{profile?.name ?? 'Member'}</h1>
+            <p className="text-xs text-slate-400">
+              {profile?.bio || 'This member hasn’t written a bio yet.'}
             </p>
-          )}
+          </div>
         </div>
+        <button
+          type="button"
+          className="rounded-md border border-slate-700 px-3 py-1 text-xs font-medium text-slate-200 hover:bg-slate-800"
+        >
+          Edit profile
+        </button>
       </header>
 
       <section className="space-y-2 rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm">
-        <h2 className="text-sm font-semibold text-slate-200">Bio</h2>
-        {loading && <p className="text-slate-500">Loading profile…</p>}
-        {error && <p className="text-red-400">{error}</p>}
-        {!loading && !error && (
-          <p className="text-slate-300">
-            {profile?.bio || 'This member hasn’t written a bio yet.'}
+        {levelInfo && (
+          <p className="text-xs text-slate-400 flex items-center gap-1">
+            <span>Level:</span>
+            {levelInfo.level === 'Bookworm' && (
+              <span className="inline-flex items-center gap-1">
+                <img src="/icons/bookworm.png" alt="Bookworm" className="h-6 w-6 invert mr-1" />
+                <span>Bookworm</span>
+              </span>
+            )}{' '}
+            {levelInfo.level === 'Scholar' && (
+              <span className="inline-flex items-center gap-1">
+                <img src="/icons/book.png" alt="Scholar" className="h-6 w-6 invert mr-1" />
+                <span>Scholar</span>
+              </span>
+            )}
+            {levelInfo.level === 'Librarian' && '📚 Librarian'}
+            {levelInfo.level === 'Shakespeare' && '✍️ Shakespeare'}
           </p>
         )}
-      </section>
-
-      <section className="space-y-2 rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm">
         {progressError && <p className="text-xs text-red-400">{progressError}</p>}
         {levelInfo && levelInfo.booksToNextLevel !== null ? (
           <>
@@ -183,8 +184,8 @@ export default function ProfilePage() {
                   </div>
                   <p className="text-[11px] text-slate-500">
                     {levelInfo.booksToNextLevel === 1
-                      ? '1 book away from the next level.'
-                      : `${levelInfo.booksToNextLevel} books away from the next level.`}
+                      ? '1 book away from leveling up!'
+                      : `${levelInfo.booksToNextLevel} books away from leveling up!`}
                   </p>
                 </div>
               );
@@ -200,15 +201,11 @@ export default function ProfilePage() {
         )}
       </section>
 
-      <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold text-slate-200">Books read</h2>
-          {readBooks.length > 0 && !readBooksLoading && (
-            <span className="text-[11px] text-slate-500">
-              {readBooks.length} {readBooks.length === 1 ? 'book' : 'books'}
-            </span>
-          )}
-        </div>
+      <section className="rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm">
+        <h1 className="mb-2">
+          Books
+          {readBooks.length > 0 && !readBooksLoading && <span> ({readBooks.length})</span>}
+        </h1>
 
         {readBooksLoading && <p className="text-xs text-slate-500">Loading reading history…</p>}
 
@@ -234,6 +231,12 @@ export default function ProfilePage() {
           </div>
         )}
       </section>
+      <button
+        type="button"
+        className="rounded-md border border-slate-700 px-3 py-1 text-xs font-medium text-slate-200 hover:bg-slate-800"
+      >
+        Logout
+      </button>
     </div>
   );
 }

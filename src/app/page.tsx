@@ -104,13 +104,13 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Home</h1>
       </header>
 
       {/* Current Book section */}
-      <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+      <section className="space-y-3  px-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-200">Current Book</h2>
+          <h2 className="text-sm font-semibold text-slate-200">Currently Reading</h2>
           <button
             type="button"
             className="text-xs font-medium text-sky-400 hover:text-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
@@ -121,16 +121,16 @@ export default function DashboardPage() {
               setUpdateError(null);
             }}
           >
-            {currentBook ? 'Edit current book' : 'Set current book'}
+            Update
           </button>
         </div>
         <div className="flex gap-3">
-          <div className="flex h-20 w-14 items-center justify-center overflow-hidden rounded-md bg-slate-800 text-[10px] text-slate-500">
+          <div className="flex h-24 w-18 items-center justify-center overflow-hidden rounded-md bg-slate-800 text-[10px] text-slate-500">
             {currentBook && currentBook.cover_image_url ? (
               <img
                 src={currentBook.cover_image_url}
                 alt={`Cover of ${currentBook.title}`}
-                className="h-full w-full object-cover"
+                className="h-full w-full"
               />
             ) : (
               <span>Cover</span>
@@ -195,9 +195,13 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-200">Top Nominations</h2>
           <Link href="/nominations" className="text-xs font-medium text-sky-400 hover:text-sky-300">
-            See all nominations →
+            Vote on nominations →
           </Link>
         </div>
+        <p className="text-xs text-slate-500">
+          These are books nominated by club members. You can vote on them to help decide the next
+          read.
+        </p>
         {nominationsError && <p className="text-xs text-red-400">{nominationsError}</p>}
         {!nominationsError && topNominations.length === 0 && (
           <p className="text-xs text-slate-500">
@@ -266,7 +270,6 @@ export default function DashboardPage() {
                 {levelInfo.level === 'Shakespeare' && '✍️ Shakespeare'}
               </span>
             </p>
-            <p>{levelInfo.booksRead} books read</p>
             {levelInfo.booksToNextLevel !== null ? (
               <>
                 {(() => {
@@ -294,8 +297,8 @@ export default function DashboardPage() {
                       </div>
                       <p className="text-[11px] text-slate-500">
                         {levelInfo.booksToNextLevel === 1
-                          ? '1 book away from the next level.'
-                          : `${levelInfo.booksToNextLevel} books away from the next level.`}
+                          ? '1 book away from leveling up!'
+                          : `${levelInfo.booksToNextLevel} books away from leveling up!`}
                       </p>
                     </div>
                   );
@@ -316,9 +319,9 @@ export default function DashboardPage() {
       {/* Recent Archive */}
       <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-200">Recent Archive</h2>
+          <h2 className="text-sm font-semibold text-slate-200">Boockclub Archives</h2>
           <Link href="/archive" className="text-xs font-medium text-sky-400 hover:text-sky-300">
-            See all archive →
+            See all →
           </Link>
         </div>
         {archiveError && <p className="text-xs text-red-400">{archiveError}</p>}
@@ -357,15 +360,6 @@ export default function DashboardPage() {
             ))}
           </ul>
         )}
-      </section>
-
-      {/* Activity Feed */}
-      <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-        <h2 className="text-sm font-semibold text-slate-200">Activity Feed</h2>
-        <p className="text-xs text-slate-500">
-          Recent activity from your club (current book changes, nominations, and finished reads)
-          will appear here.
-        </p>
       </section>
 
       {isConfirmOpen && (
