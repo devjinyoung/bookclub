@@ -1,15 +1,21 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { getCurrentUser } from "@/lib/profile";
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState, type ReactNode } from 'react';
+import { getCurrentUser } from '@/lib/profile';
 
-const tabs = [
-  { href: "/", label: "Home", icon: "🏠" as const },
-  { href: "/nominations", label: "Nominations", icon: "📚" as const },
-  { href: "/members", label: "Members", icon: "👥" as const },
-] as const;
+type Tab = {
+  href: string;
+  label: string;
+  icon: ReactNode;
+};
+
+const tabs: Tab[] = [
+  { href: '/', label: 'Home', icon: 'home.png' },
+  { href: '/nominations', label: 'Books', icon: 'star.png' },
+  { href: '/members', label: 'Members', icon: 'cat.png' },
+];
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -24,28 +30,23 @@ export function BottomNav() {
     });
   }, []);
 
-  const isProfileActive = pathname.startsWith("/profile");
+  const isProfileActive = pathname.startsWith('/profile');
 
   return (
-    <nav className="sticky bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-md items-stretch justify-between px-2 py-2 text-xs">
+    <nav className="w-full sticky bottom-0 left-0 right-0 border-t border-slate-800 bg-black">
+      <div className="mx-auto flex w-full items-stretch justify-around px-2 py-2 text-xs text-white">
         {tabs.map((tab) => {
-          const isActive =
-            tab.href === "/"
-              ? pathname === "/"
-              : pathname.startsWith(tab.href);
+          const isActive = tab.href === '/' ? pathname === '/' : pathname.startsWith(tab.href);
 
           return (
             <Link
               key={tab.href}
               href={tab.href}
-              className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-2 py-1 transition-colors ${
-                isActive
-                  ? "text-sky-300"
-                  : "text-slate-400 hover:text-slate-100"
+              className={`flex flex-col items-center justify-center gap-0.5 rounded-md px-2 py-1 transition-colors ${
+                isActive ? 'text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
-              <span className="text-lg leading-none">{tab.icon}</span>
+              <img src={`/icons/${tab.icon}`} alt={tab.label} className="h-5 w-5 invert" />
               <span className="leading-none">{tab.label}</span>
             </Link>
           );
@@ -57,20 +58,19 @@ export function BottomNav() {
             if (currentUserId) {
               router.push(`/profile/${currentUserId}`);
             } else {
-              router.push("/login");
+              router.push('/login');
             }
           }}
-          className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-2 py-1 text-xs transition-colors ${
-            isProfileActive
-              ? "text-sky-300"
-              : "text-slate-400 hover:text-slate-100"
+          className={`flex flex-col items-center justify-center gap-0.5 rounded-md px-2 py-1 text-xs transition-colors ${
+            isProfileActive ? 'text-white' : 'text-slate-400 hover:text-white'
           }`}
         >
-          <span className="text-lg leading-none">👤</span>
+          <span className="leading-none">
+            <img src="/icons/person.png" alt="Profile" className="h-5 w-5 invert" />
+          </span>
           <span className="leading-none">Profile</span>
         </button>
       </div>
     </nav>
   );
 }
-

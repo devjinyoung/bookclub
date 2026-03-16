@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import type { SearchBookPayload } from "@/lib/nominations";
+import { useEffect, useState } from 'react';
+import type { SearchBookPayload } from '@/lib/nominations';
 
 export interface BookSearchResult extends SearchBookPayload {}
 
@@ -10,55 +10,59 @@ interface BookSearchProps {
 }
 
 export function BookSearch({ onSelect }: BookSearchProps) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const [results, setResults] = useState<BookSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
+  useEffect(() => {
+    const trimmed = query.trim();
     setError(null);
 
-    if (!query.trim()) {
+    if (!trimmed) {
       setResults([]);
       return;
     }
 
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/books/search?q=${encodeURIComponent(query)}`);
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Search failed.");
+    const controller = new AbortController();
+    const timeoutId = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/books/search?q=${encodeURIComponent(trimmed)}`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error ?? 'Search failed.');
+        }
+        const data = await res.json();
+        setResults(data.results ?? []);
+      } catch (err: any) {
+        if (err.name === 'AbortError') return;
+        setError(err.message ?? 'Search failed.');
+        setResults([]);
+      } finally {
+        setLoading(false);
       }
-      const data = await res.json();
-      setResults(data.results ?? []);
-    } catch (err: any) {
-      setError(err.message ?? "Search failed.");
-      setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  }
+    }, 300);
+
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [query]);
 
   return (
     <div className="space-y-3">
-      <form onSubmit={handleSearch} className="flex gap-2">
+      <div className="flex gap-2">
         <input
           type="text"
-          placeholder="Search Google Books..."
+          placeholder="Search for a book..."
           className="flex-1 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none ring-0 ring-sky-500 focus:border-sky-500 focus:ring-1"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-md bg-sky-500 px-3 py-2 text-sm font-medium text-slate-950 hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {loading ? "Searching..." : "Search"}
-        </button>
-      </form>
+      </div>
 
       {error && <p className="text-xs text-red-400">{error}</p>}
 
@@ -68,16 +72,18 @@ export function BookSearch({ onSelect }: BookSearchProps) {
             <li key={book.googleBooksId}>
               <button
                 type="button"
-                onClick={() => onSelect?.(book)}
+                onClick={() => {
+                  onSelect?.(book);
+                  setResults([]);
+                  setQuery('');
+                }}
                 className="flex w-full items-start gap-2 rounded-md px-2 py-1 text-left hover:bg-slate-800"
               >
                 <div className="flex h-10 w-7 items-center justify-center rounded bg-slate-800 text-[10px] text-slate-500">
-                  {book.coverImageUrl ? "Cover" : "No cover"}
+                  {book.coverImageUrl ? 'Cover' : 'No cover'}
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-slate-200">
-                    {book.title}
-                  </p>
+                  <p className="text-xs font-medium text-slate-200">{book.title}</p>
                   <p className="text-[11px] text-slate-500">{book.author}</p>
                 </div>
               </button>
@@ -88,4 +94,3 @@ export function BookSearch({ onSelect }: BookSearchProps) {
     </div>
   );
 }
-

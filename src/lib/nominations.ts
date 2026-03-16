@@ -1,4 +1,4 @@
-import { supabaseBrowserClient } from "./supabaseClient";
+import { supabaseBrowserClient } from './supabaseClient';
 
 export interface SearchBookPayload {
   googleBooksId: string;
@@ -30,7 +30,7 @@ export interface NominationWithMeta {
 
 export async function fetchNominationsWithVotes(): Promise<NominationWithMeta[]> {
   const { data, error } = await supabaseBrowserClient
-    .from("nominations")
+    .from('nominations')
     .select(
       `
         id,
@@ -50,38 +50,38 @@ export async function fetchNominationsWithVotes(): Promise<NominationWithMeta[]>
         votes:votes ( id )
       `,
     )
-    .order("created_at", { ascending: false });
+    .order('created_at', { ascending: false });
 
   if (error) {
     throw error;
   }
 
-  return (data ?? []).map((row: any) => ({
-    id: row.id as string,
-    pitch: row.pitch as string,
-    created_at: row.created_at as string,
-    updated_at: row.updated_at as string,
-    book: {
-      id: row.book.id as string,
-      title: row.book.title as string,
-      author: row.book.author as string,
-      cover_image_url: (row.book.cover_image_url as string | null) ?? null,
-    },
-    nominator: row.nominator
-      ? ({
-          id: row.nominator.id as string,
-          name: row.nominator.name as string,
-        } as const)
-      : null,
-    vote_count: Array.isArray(row.votes) ? row.votes.length : 0,
-  })).sort((a, b) => b.vote_count - a.vote_count);
+  return (data ?? [])
+    .map((row: any) => ({
+      id: row.id as string,
+      pitch: row.pitch as string,
+      created_at: row.created_at as string,
+      updated_at: row.updated_at as string,
+      book: {
+        id: row.book.id as string,
+        title: row.book.title as string,
+        author: row.book.author as string,
+        cover_image_url: (row.book.cover_image_url as string | null) ?? null,
+      },
+      nominator: row.nominator
+        ? ({
+            id: row.nominator.id as string,
+            name: row.nominator.name as string,
+          } as const)
+        : null,
+      vote_count: Array.isArray(row.votes) ? row.votes.length : 0,
+    }))
+    .sort((a, b) => b.vote_count - a.vote_count);
 }
 
-export async function ensureBookFromSearchPayload(
-  book: SearchBookPayload,
-): Promise<string> {
+export async function ensureBookFromSearchPayload(book: SearchBookPayload): Promise<string> {
   const { data, error } = await supabaseBrowserClient
-    .from("books")
+    .from('books')
     .upsert(
       {
         google_books_id: book.googleBooksId,
@@ -93,10 +93,10 @@ export async function ensureBookFromSearchPayload(
         description: book.description ?? null,
       },
       {
-        onConflict: "google_books_id",
+        onConflict: 'google_books_id',
       },
     )
-    .select("id")
+    .select('id')
     .single();
 
   if (error) {
@@ -108,26 +108,16 @@ export async function ensureBookFromSearchPayload(
 
 export async function assertBookCanBeNominated(bookId: string): Promise<void> {
   const [{ data: existingNom }, { data: existingArchive }] = await Promise.all([
-    supabaseBrowserClient
-      .from("nominations")
-      .select("id")
-      .eq("book_id", bookId)
-      .maybeSingle(),
-    supabaseBrowserClient
-      .from("archived_books")
-      .select("id")
-      .eq("book_id", bookId)
-      .maybeSingle(),
+    supabaseBrowserClient.from('nominations').select('id').eq('book_id', bookId).maybeSingle(),
+    supabaseBrowserClient.from('archived_books').select('id').eq('book_id', bookId).maybeSingle(),
   ]);
 
   if (existingNom) {
-    throw new Error(
-      "This book has already been nominated. Vote for it instead!",
-    );
+    throw new Error('This book has already been nominated. Vote for it instead!');
   }
 
   if (existingArchive) {
-    throw new Error("This book has already been read by the club.");
+    throw new Error('This book has already been read by the club.');
   }
 }
 
@@ -140,7 +130,7 @@ export async function createNominationFromSearchPayload(
   await assertBookCanBeNominated(bookId);
 
   const { data, error } = await supabaseBrowserClient
-    .from("nominations")
+    .from('nominations')
     .insert({
       book_id: bookId,
       nominated_by: userId,
@@ -169,10 +159,8 @@ export async function createNominationFromSearchPayload(
 
   if (error) {
     // Unique constraint fallback, just in case.
-    if (error.code === "23505") {
-      throw new Error(
-        "This book has already been nominated. Vote for it instead!",
-      );
+    if (error.code === '23505') {
+      throw new Error('This book has already been nominated. Vote for it instead!');
     }
     throw error;
   }
@@ -186,8 +174,7 @@ export async function createNominationFromSearchPayload(
       id: data.book.id as string,
       title: data.book.title as string,
       author: data.book.author as string,
-      cover_image_url:
-        (data.book.cover_image_url as string | null | undefined) ?? null,
+      cover_image_url: (data.book.cover_image_url as string | null | undefined) ?? null,
     },
     nominator: data.nominator
       ? ({
@@ -199,13 +186,11 @@ export async function createNominationFromSearchPayload(
   };
 }
 
-export async function fetchUserVoteNominationIds(
-  userId: string,
-): Promise<string[]> {
+export async function fetchUserVoteNominationIds(userId: string): Promise<string[]> {
   const { data, error } = await supabaseBrowserClient
-    .from("votes")
-    .select("nomination_id")
-    .eq("user_id", userId);
+    .from('votes')
+    .select('nomination_id')
+    .eq('user_id', userId);
 
   if (error) {
     throw error;
@@ -221,16 +206,16 @@ export async function toggleVote(
 ): Promise<void> {
   if (hasVoted) {
     const { error } = await supabaseBrowserClient
-      .from("votes")
+      .from('votes')
       .delete()
-      .eq("nomination_id", nominationId)
-      .eq("user_id", userId);
+      .eq('nomination_id', nominationId)
+      .eq('user_id', userId);
 
     if (error) {
       throw error;
     }
   } else {
-    const { error } = await supabaseBrowserClient.from("votes").insert({
+    const { error } = await supabaseBrowserClient.from('votes').insert({
       nomination_id: nominationId,
       user_id: userId,
     });
@@ -240,5 +225,3 @@ export async function toggleVote(
     }
   }
 }
-
-

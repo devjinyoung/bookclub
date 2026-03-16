@@ -8,10 +8,8 @@ export default function MembersPage() {
         </p>
       </header>
       <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-400">
-        The members directory and level badges will be implemented in a later
-        phase.
+        The members directory and level badges will be implemented in a later phase.
       </div>
     </div>
   );
 }
-

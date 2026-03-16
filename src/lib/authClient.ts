@@ -1,4 +1,4 @@
-import { supabaseBrowserClient } from "./supabaseClient";
+import { supabaseBrowserClient } from './supabaseClient';
 
 interface SignupParams {
   name: string;
@@ -7,19 +7,14 @@ interface SignupParams {
   bio?: string;
 }
 
-export async function signUpWithEmail({
-  name,
-  email,
-  password,
-  bio,
-}: SignupParams) {
+export async function signUpWithEmail({ name, email, password, bio }: SignupParams) {
   const { data, error } = await supabaseBrowserClient.auth.signUp({
     email,
     password,
     options: {
       data: {
         name,
-        bio: bio ?? "",
+        bio: bio ?? '',
       },
     },
   });
@@ -28,8 +23,8 @@ export async function signUpWithEmail({
     throw error;
   }
 
-  if (typeof document !== "undefined") {
-    document.cookie = "bookclub-auth=1; path=/";
+  if (typeof document !== 'undefined') {
+    document.cookie = 'bookclub-auth=1; path=/';
   }
 
   return data;
@@ -50,11 +45,10 @@ export async function signInWithEmail({ email, password }: SignInParams) {
     throw error;
   }
 
-  if (typeof document !== "undefined") {
-    console.log("setting cookie");
-    document.cookie = "bookclub-auth=1; path=/";
+  if (typeof document !== 'undefined') {
+    console.log('setting cookie');
+    document.cookie = 'bookclub-auth=1; path=/';
   }
 
   return data;
 }
-

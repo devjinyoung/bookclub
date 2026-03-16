@@ -152,4 +152,3 @@
   - Deploy frontend to Vercel connected to `devjinyoung/bookclub`.
   - Configure environment variables in Vercel.
   - Ensure Supabase project is in production-ready state with the same schema/RLS.
-

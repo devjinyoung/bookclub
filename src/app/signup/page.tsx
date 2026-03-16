@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { signUpWithEmail } from "@/lib/authClient";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { signUpWithEmail } from '@/lib/authClient';
 
 export default function SignupPage() {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [bio, setBio] = useState("");
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [bio, setBio] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,16 +18,16 @@ export default function SignupPage() {
     setError(null);
 
     if (!name || !email || !password) {
-      setError("Name, email, and password are required.");
+      setError('Name, email, and password are required.');
       return;
     }
 
     setIsSubmitting(true);
     try {
       await signUpWithEmail({ name, email, password, bio });
-      router.push("/");
+      router.push('/');
     } catch (err: any) {
-      setError(err.message ?? "Something went wrong while signing up.");
+      setError(err.message ?? 'Something went wrong while signing up.');
     } finally {
       setIsSubmitting(false);
     }
@@ -61,10 +61,7 @@ export default function SignupPage() {
         </div>
 
         <div className="space-y-1">
-          <label
-            className="text-sm font-medium text-slate-200"
-            htmlFor="email"
-          >
+          <label className="text-sm font-medium text-slate-200" htmlFor="email">
             Email
           </label>
           <input
@@ -78,10 +75,7 @@ export default function SignupPage() {
         </div>
 
         <div className="space-y-1">
-          <label
-            className="text-sm font-medium text-slate-200"
-            htmlFor="password"
-          >
+          <label className="text-sm font-medium text-slate-200" htmlFor="password">
             Password
           </label>
           <input
@@ -118,10 +112,9 @@ export default function SignupPage() {
           disabled={isSubmitting}
           className="mt-2 inline-flex w-full items-center justify-center rounded-md bg-sky-500 px-3 py-2 text-sm font-medium text-slate-950 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {isSubmitting ? "Creating account..." : "Create account"}
+          {isSubmitting ? 'Creating account...' : 'Create account'}
         </button>
       </form>
     </div>
   );
 }
-

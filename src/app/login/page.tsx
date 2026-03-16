@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { signInWithEmail } from "@/lib/authClient";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { signInWithEmail } from '@/lib/authClient';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,17 +16,17 @@ export default function LoginPage() {
     setError(null);
 
     if (!email || !password) {
-      setError("Email and password are required.");
+      setError('Email and password are required.');
       return;
     }
 
     setIsSubmitting(true);
     try {
       await signInWithEmail({ email, password });
-      console.log("Sign in successful");
-      router.push("/");
+      console.log('Sign in successful');
+      router.push('/');
     } catch (err: any) {
-      setError(err.message ?? "Invalid email or password.");
+      setError(err.message ?? 'Invalid email or password.');
     } finally {
       setIsSubmitting(false);
     }
@@ -36,9 +36,7 @@ export default function LoginPage() {
     <div className="space-y-6">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Log in</h1>
-        <p className="mt-1 text-sm text-slate-400">
-          Sign in to your book club account.
-        </p>
+        <p className="mt-1 text-sm text-slate-400">Sign in to your book club account.</p>
       </header>
 
       <form
@@ -46,10 +44,7 @@ export default function LoginPage() {
         className="space-y-4 rounded-xl border border-slate-800 bg-slate-900/40 p-4"
       >
         <div className="space-y-1">
-          <label
-            className="text-sm font-medium text-slate-200"
-            htmlFor="email"
-          >
+          <label className="text-sm font-medium text-slate-200" htmlFor="email">
             Email
           </label>
           <input
@@ -63,10 +58,7 @@ export default function LoginPage() {
         </div>
 
         <div className="space-y-1">
-          <label
-            className="text-sm font-medium text-slate-200"
-            htmlFor="password"
-          >
+          <label className="text-sm font-medium text-slate-200" htmlFor="password">
             Password
           </label>
           <input
@@ -90,15 +82,13 @@ export default function LoginPage() {
           disabled={isSubmitting}
           className="mt-2 inline-flex w-full items-center justify-center rounded-md bg-sky-500 px-3 py-2 text-sm font-medium text-slate-950 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {isSubmitting ? "Signing in..." : "Sign in"}
+          {isSubmitting ? 'Signing in...' : 'Sign in'}
         </button>
 
         <p className="mt-2 text-xs text-slate-500">
-          Forgot password?{" "}
-          <span className="font-medium text-slate-300">Coming soon.</span>
+          Forgot password? <span className="font-medium text-slate-300">Coming soon.</span>
         </p>
       </form>
     </div>
   );
 }
-
