@@ -43,6 +43,8 @@ export default function DashboardPage() {
   const [recentArchived, setRecentArchived] = useState<ArchivedBookWithMeta[]>([]);
   const [archiveError, setArchiveError] = useState<string | null>(null);
 
+  const [showProgressInfo, setShowProgressInfo] = useState(false);
+
   useEffect(() => {
     async function load() {
       try {
@@ -103,26 +105,10 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Home</h1>
-      </header>
-
       {/* Current Book section */}
       <section className="space-y-3  px-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-200">Currently Reading</h2>
-          <button
-            type="button"
-            className="text-xs font-medium text-sky-400 hover:text-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={!currentUserId}
-            onClick={() => {
-              setMode(currentBook ? 'edit' : 'set');
-              setIsConfirmOpen(true);
-              setUpdateError(null);
-            }}
-          >
-            Update
-          </button>
         </div>
         <div className="flex gap-3">
           <div className="flex h-24 w-18 items-center justify-center overflow-hidden rounded-md bg-slate-800 text-[10px] text-slate-500">
@@ -187,6 +173,20 @@ export default function DashboardPage() {
               </>
             )}
           </div>
+          <div>
+            <button
+              type="button"
+              className="rounded-md border border-slate-700 px-3 py-1 text-xs font-medium text-slate-200 hover:bg-slate-800"
+              disabled={!currentUserId}
+              onClick={() => {
+                setMode(currentBook ? 'edit' : 'set');
+                setIsConfirmOpen(true);
+                setUpdateError(null);
+              }}
+            >
+              Change
+            </button>
+          </div>
         </div>
       </section>
 
@@ -195,10 +195,10 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-200">Top Nominations</h2>
           <Link href="/nominations" className="text-xs font-medium text-sky-400 hover:text-sky-300">
-            Vote on nominations →
+            See all →
           </Link>
         </div>
-        <p className="text-xs text-slate-500">
+        <p className="text-[11px] text-slate-500">
           These are books nominated by club members. You can vote on them to help decide the next
           read.
         </p>
@@ -247,7 +247,25 @@ export default function DashboardPage() {
 
       {/* Your Progress */}
       <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-        <h2 className="text-sm font-semibold text-slate-200">Your Progress</h2>
+        <div className="relative flex items-center gap-1.5">
+          <h2 className="text-sm font-semibold text-slate-200">Your Progress</h2>
+          <button
+            type="button"
+            onClick={() => setShowProgressInfo((v) => !v)}
+            onMouseEnter={() => setShowProgressInfo(true)}
+            onMouseLeave={() => setShowProgressInfo(false)}
+            className="flex shrink-0 rounded-full p-0.5 text-slate-400 hover:text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+            aria-label="Progress info"
+          >
+            <img src="/icons/info.png" alt="" className="h-3 w-3 invert" />
+          </button>
+          {showProgressInfo && (
+            <div className="absolute left-0 top-full z-10 mt-1.5 max-w-[280px] rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-300 shadow-lg">
+              Track how many books you&apos;ve read with the club. Complete books to level up from
+              Bookworm to Shakespeare!
+            </div>
+          )}
+        </div>
         {progressError && <p className="text-xs text-red-400">{progressError}</p>}
         {!progressError && levelInfo && (
           <div className="space-y-2 text-xs text-slate-300">
@@ -266,7 +284,12 @@ export default function DashboardPage() {
                     <span>Scholar</span>
                   </>
                 )}
-                {levelInfo.level === 'Librarian' && '📚 Librarian'}
+                {levelInfo.level === 'Librarian' && (
+                  <span className="inline-flex items-center gap-1">
+                    <img src="/icons/heart.png" alt="Librarian" className="h-6 w-6 invert mx-1" />
+                    <span>Librarian</span>
+                  </span>
+                )}{' '}
                 {levelInfo.level === 'Shakespeare' && '✍️ Shakespeare'}
               </span>
             </p>

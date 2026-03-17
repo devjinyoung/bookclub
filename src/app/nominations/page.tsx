@@ -145,7 +145,6 @@ export default function NominationsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Nominations</h1>
         <p className="mt-1 mb-3 text-sm text-slate-400">
           Discover, nominate, and vote on future club reads.
         </p>
@@ -156,7 +155,7 @@ export default function NominationsPage() {
             setIsNominateOpen(true);
           }}
           disabled={!currentUserId}
-          className="inline-flex items-center justify-center rounded-md bg-sky-500 px-3 py-1.5 text-xs font-medium text-slate-950 hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center justify-center rounded-md bg-sky-500 py-3 px-4 text-xs font-bold text-slate-950 hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Nominate a Book +
         </button>

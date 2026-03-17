@@ -40,7 +40,6 @@ export default function ArchivePage() {
   return (
     <div className="space-y-4">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Archive</h1>
         <p className="mt-1 text-sm text-slate-400">
           A shared history of every book your club has read.
         </p>

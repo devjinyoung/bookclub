@@ -142,17 +142,22 @@ export default function ProfilePage() {
             <span>Level:</span>
             {levelInfo.level === 'Bookworm' && (
               <span className="inline-flex items-center gap-1">
-                <img src="/icons/bookworm.png" alt="Bookworm" className="h-6 w-6 invert mr-1" />
+                <img src="/icons/bookworm.png" alt="Bookworm" className="h-6 w-6 invert mx-1" />
                 <span>Bookworm</span>
               </span>
             )}{' '}
             {levelInfo.level === 'Scholar' && (
               <span className="inline-flex items-center gap-1">
-                <img src="/icons/book.png" alt="Scholar" className="h-6 w-6 invert mr-1" />
+                <img src="/icons/book.png" alt="Scholar" className="h-6 w-6 invert mx-1" />
                 <span>Scholar</span>
               </span>
             )}
-            {levelInfo.level === 'Librarian' && '📚 Librarian'}
+            {levelInfo.level === 'Librarian' && (
+              <span className="inline-flex items-center gap-1">
+                <img src="/icons/heart.png" alt="Librarian" className="h-6 w-6 invert mx-1" />
+                <span>Librarian</span>
+              </span>
+            )}
             {levelInfo.level === 'Shakespeare' && '✍️ Shakespeare'}
           </p>
         )}

@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { supabaseBrowserClient } from "@/lib/supabaseClient";
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { supabaseBrowserClient } from '@/lib/supabaseClient';
 
 interface MemberRow {
   id: string;
@@ -19,9 +19,9 @@ export default function MembersPage() {
     async function loadMembers() {
       try {
         const { data, error } = await supabaseBrowserClient
-          .from("profiles")
-          .select("id, name, avatar_url")
-          .order("name", { ascending: true });
+          .from('profiles')
+          .select('id, name, avatar_url')
+          .order('name', { ascending: true });
 
         if (error) throw error;
 
@@ -34,7 +34,7 @@ export default function MembersPage() {
 
         setMembers(baseMembers);
       } catch {
-        setError("Unable to load members.");
+        setError('Unable to load members.');
       } finally {
         setLoading(false);
       }
@@ -46,7 +46,6 @@ export default function MembersPage() {
   return (
     <div className="space-y-4">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Members</h1>
         <p className="mt-1 text-sm text-slate-400">
           Meet your fellow club members and see their reading progress.
         </p>
@@ -75,28 +74,23 @@ export default function MembersPage() {
           {members.map((member) => {
             const initials =
               member.name
-                .split(" ")
+                .split(' ')
                 .filter(Boolean)
                 .map((part) => part[0]?.toUpperCase())
                 .slice(0, 2)
-                .join("") || "?";
+                .join('') || '?';
 
             return (
               <li
                 key={member.id}
                 className="rounded-xl border border-slate-800 bg-slate-950/40 p-3"
               >
-                <Link
-                  href={`/profile/${member.id}`}
-                  className="flex items-center gap-3"
-                >
+                <Link href={`/profile/${member.id}`} className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 text-xs font-semibold text-slate-950">
                     {initials}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-200">
-                      {member.name}
-                    </p>
+                    <p className="text-sm font-medium text-slate-200">{member.name}</p>
                   </div>
                 </Link>
               </li>
