@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { fetchArchivedBooks, type ArchivedBookWithMeta } from '@/lib/archive';
 import { BookCard } from '@/components/BookCard';
+import { getCurrentUser } from '@/lib/profile';
+import { updateCurrentBookStatus } from '@/lib/readingStatus';
 
 const MONTH_NAMES = [
   'January',
@@ -23,6 +25,9 @@ export default function ArchivePage() {
   const [archivedBooks, setArchivedBooks] = useState<ArchivedBookWithMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchArchivedBooks()
@@ -36,6 +41,30 @@ export default function ArchivePage() {
         setLoading(false);
       });
   }, []);
+
+  useEffect(() => {
+    getCurrentUser()
+      .then(({ data }) => {
+        setCurrentUserId(data.user?.id ?? null);
+      })
+      .catch(() => {
+        setCurrentUserId(null);
+      });
+  }, []);
+
+  async function handleMarkAsRead(bookId: string) {
+    if (!currentUserId) return;
+
+    setUpdatingStatus(true);
+    setUpdateError(null);
+    try {
+      await updateCurrentBookStatus(currentUserId, bookId, 'read');
+    } catch {
+      setUpdateError('Unable to update reading status.');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -57,6 +86,12 @@ export default function ArchivePage() {
         </div>
       )}
 
+      {updateError && (
+        <div className="rounded-xl border border-red-900 bg-red-950/40 p-4 text-xs text-red-300">
+          {updateError}
+        </div>
+      )}
+
       {!loading && !error && archivedBooks.length === 0 && (
         <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-400">
           No books in the archive yet — the club&apos;s reading history will appear here.
@@ -73,6 +108,11 @@ export default function ArchivePage() {
                 coverImageUrl={entry.book.cover_image_url}
                 subtitle={`${MONTH_NAMES[entry.month - 1]} ${entry.year}`}
                 className="h-full"
+                actionButtonLabel="Mark as read"
+                actionButtonLoadingText="Marking…"
+                actionButtonDisabled={!currentUserId || updatingStatus}
+                actionButtonLoading={updatingStatus}
+                onActionButtonClick={() => handleMarkAsRead(entry.book.id)}
               />
             </li>
           ))}

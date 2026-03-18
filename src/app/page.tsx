@@ -247,14 +247,14 @@ export default function DashboardPage() {
 
       {/* Your Progress */}
       <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-        <div className="relative flex items-center gap-1.5">
+        <div className="relative flex items-center">
           <h2 className="text-sm font-semibold text-slate-200">Your Progress</h2>
           <button
             type="button"
             onClick={() => setShowProgressInfo((v) => !v)}
             onMouseEnter={() => setShowProgressInfo(true)}
             onMouseLeave={() => setShowProgressInfo(false)}
-            className="flex shrink-0 rounded-full p-0.5 text-slate-400 hover:text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+            className="flex shrink-0 rounded-full text-slate-400 hover:text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 pl-1"
             aria-label="Progress info"
           >
             <img src="/icons/info.png" alt="" className="h-3 w-3 invert" />

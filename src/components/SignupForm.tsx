@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import NameBioFields from '@/components/NameBioFields';
 
 export type SignupFormValues = {
   name: string;
@@ -47,19 +48,15 @@ export default function SignupForm({ onSubmit }: SignupFormProps) {
       onSubmit={handleSubmit}
       className="space-y-4 rounded-xl border border-slate-800 bg-slate-900/40 p-4"
     >
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-slate-200" htmlFor="name">
-          Name
-        </label>
-        <input
-          id="name"
-          type="text"
-          className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none ring-0 ring-sky-500 focus:border-sky-500 focus:ring-1"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-      </div>
+      <NameBioFields
+        nameId="name"
+        nameValue={name}
+        onNameChange={setName}
+        nameRequired
+        bioId="bio"
+        bioValue={bio}
+        onBioChange={setBio}
+      />
 
       <div className="space-y-1">
         <label className="text-sm font-medium text-slate-200" htmlFor="email">
@@ -89,19 +86,6 @@ export default function SignupForm({ onSubmit }: SignupFormProps) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-        />
-      </div>
-
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-slate-200" htmlFor="bio">
-          Bio <span className="font-normal text-slate-500">(optional)</span>
-        </label>
-        <textarea
-          id="bio"
-          rows={3}
-          className="w-full resize-none rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none ring-0 ring-sky-500 focus:border-sky-500 focus:ring-1"
-          value={bio}
-          onChange={(e) => setBio(e.target.value)}
         />
       </div>
 

@@ -12,6 +12,15 @@ interface BookCardProps {
    * Optional click handler for making the whole card interactive.
    */
   onClick?: () => void;
+
+  /**
+   * Optional inline action rendered as a text button (e.g. "Mark as read").
+   */
+  actionButtonLabel?: string;
+  onActionButtonClick?: () => void;
+  actionButtonDisabled?: boolean;
+  actionButtonLoading?: boolean;
+  actionButtonLoadingText?: string;
   /**
    * Optional extra classes to customize layout when reusing the card.
    */
@@ -25,8 +34,17 @@ export function BookCard({
   subtitle,
   ctaLabel,
   onClick,
+  actionButtonLabel,
+  onActionButtonClick,
+  actionButtonDisabled,
+  actionButtonLoading,
+  actionButtonLoadingText,
   className,
 }: BookCardProps) {
+  const actionText = actionButtonLoading
+    ? actionButtonLoadingText ?? 'Please wait…'
+    : actionButtonLabel;
+
   return (
     <div
       onClick={onClick}
@@ -54,6 +72,23 @@ export function BookCard({
             <span className="inline-flex items-center rounded-full bg-sky-500/10 px-2 py-0.5 text-[11px] font-medium text-sky-300 group-hover:bg-sky-500/20">
               {ctaLabel}
             </span>
+          </div>
+        )}
+
+        {actionButtonLabel && (
+          <div className="mt-auto">
+            <button
+              type="button"
+              onClick={(e) => {
+                // Prevent triggering the card's `onClick` handler.
+                e.stopPropagation();
+                onActionButtonClick?.();
+              }}
+              className="text-[11px] font-medium text-sky-400 hover:text-sky-300 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={actionButtonDisabled}
+            >
+              {actionText}
+            </button>
           </div>
         )}
       </div>

@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { getProfileById } from '@/lib/profile';
+import { getProfileById, updateProfile } from '@/lib/profile';
 import { fetchBooksReadCount, getLevelInfo, type LevelInfo } from '@/lib/levels';
 import { supabaseBrowserClient } from '@/lib/supabaseClient';
 import { BookCard } from '@/components/BookCard';
+import EditProfileForm from '@/components/EditProfileForm';
 
 interface Profile {
   id: string;
@@ -28,6 +29,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
 
   const [levelInfo, setLevelInfo] = useState<LevelInfo | null>(null);
   const [progressError, setProgressError] = useState<string | null>(null);
@@ -140,15 +142,29 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-        {isOwnProfile && (
+        {isOwnProfile && profile && !isEditingProfile && (
           <button
             type="button"
             className="rounded-md border border-slate-700 px-3 py-1 text-[10px] font-medium text-slate-200 hover:bg-slate-800"
+            onClick={() => setIsEditingProfile(true)}
           >
             Edit profile
           </button>
         )}
       </header>
+
+      {isOwnProfile && isEditingProfile && profile && (
+        <EditProfileForm
+          initialName={profile.name}
+          initialBio={profile.bio}
+          onCancel={() => setIsEditingProfile(false)}
+          onSave={async ({ name, bio }) => {
+            const updated = await updateProfile({ userId, name, bio });
+            setProfile(updated);
+            setIsEditingProfile(false);
+          }}
+        />
+      )}
 
       <section className="space-y-2 rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm">
         {levelInfo && (
