@@ -36,6 +36,16 @@ export default function ProfilePage() {
   const [readBooksLoading, setReadBooksLoading] = useState(true);
   const [readBooksError, setReadBooksError] = useState<string | null>(null);
 
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabaseBrowserClient.auth.getUser().then(({ data: { user } }) => {
+      setCurrentUserId(user?.id ?? null);
+    });
+  }, []);
+
+  const isOwnProfile = Boolean(currentUserId && userId && currentUserId === userId);
+
   useEffect(() => {
     getProfileById(userId)
       .then((data) => {
@@ -123,17 +133,21 @@ export default function ProfilePage() {
           </div>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{profile?.name ?? 'Member'}</h1>
-            <p className="text-xs text-slate-400">
-              {profile?.bio || 'This member hasn’t written a bio yet.'}
-            </p>
+            <div className="max-w-[200px]">
+              <p className="text-[10px] text-slate-400">
+                {profile?.bio || 'This member hasn’t written a bio yet.'}
+              </p>
+            </div>
           </div>
         </div>
-        <button
-          type="button"
-          className="rounded-md border border-slate-700 px-3 py-1 text-xs font-medium text-slate-200 hover:bg-slate-800"
-        >
-          Edit profile
-        </button>
+        {isOwnProfile && (
+          <button
+            type="button"
+            className="rounded-md border border-slate-700 px-3 py-1 text-[10px] font-medium text-slate-200 hover:bg-slate-800"
+          >
+            Edit profile
+          </button>
+        )}
       </header>
 
       <section className="space-y-2 rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm">
@@ -236,12 +250,14 @@ export default function ProfilePage() {
           </div>
         )}
       </section>
-      <button
-        type="button"
-        className="rounded-md border border-slate-700 px-3 py-1 text-xs font-medium text-slate-200 hover:bg-slate-800"
-      >
-        Logout
-      </button>
+      {isOwnProfile && (
+        <button
+          type="button"
+          className="rounded-md border border-slate-700 px-3 py-1 text-[10px] font-medium text-slate-200 hover:bg-slate-800"
+        >
+          Logout
+        </button>
+      )}
     </div>
   );
 }
