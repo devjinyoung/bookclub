@@ -155,9 +155,9 @@ export default function NominationsPage() {
             setIsNominateOpen(true);
           }}
           disabled={!currentUserId}
-          className="inline-flex items-center justify-center rounded-md bg-sky-500 py-3 px-4 text-xs font-bold text-slate-950 hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full inline-flex items-center justify-center rounded-md bg-sky-500 py-3 px-4 text-sm font-bold text-white hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Nominate a Book +
+          <p>Nominate a Book</p>
         </button>
       </header>
 

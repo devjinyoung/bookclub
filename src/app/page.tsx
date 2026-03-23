@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Label, ListBox, Select } from '@heroui/react';
+import ReactCanvasConfetti from 'react-canvas-confetti';
+import type { CreateTypes as CanvasConfettiInstance } from 'canvas-confetti';
 import {
   fetchCurrentBook,
   type CurrentBookWithMeta,
@@ -16,10 +18,12 @@ import {
 } from '@/lib/readingStatus';
 import { fetchNominationsWithVotes, type NominationWithMeta } from '@/lib/nominations';
 import Link from 'next/link';
-import { fetchBooksReadCount, getLevelInfo, type LevelInfo } from '@/lib/levels';
+import { fetchBooksReadCount, getLevelInfo, levelRank, type LevelInfo } from '@/lib/levels';
 import { fetchArchivedBooks, type ArchivedBookWithMeta } from '@/lib/archive';
+import ModalComponent from '@/components/Modal';
 
 export default function DashboardPage() {
+  const confettiRef = useRef<CanvasConfettiInstance | null>(null);
   const [currentBook, setCurrentBook] = useState<CurrentBookWithMeta | null>(null);
   const [loadingCurrentBook, setLoadingCurrentBook] = useState(true);
   const [currentBookError, setCurrentBookError] = useState<string | null>(null);
@@ -46,16 +50,21 @@ export default function DashboardPage() {
 
   const [showProgressInfo, setShowProgressInfo] = useState(false);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   useEffect(() => {
     async function load() {
       try {
         const [{ data }, book] = await Promise.all([getCurrentUser(), fetchCurrentBook()]);
 
-        if (data.user) {
-          setCurrentUserId(data.user.id);
-        }
-        setCurrentBook(book);
-        if (data.user && book) {
+        //TODO: clean up. user should always exist.
+        if (!data.user) return;
+        setCurrentUserId(data.user.id);
+        const count = await fetchBooksReadCount(data.user.id);
+        setLevelInfo(getLevelInfo(count));
+
+        if (book) {
+          setCurrentBook(book);
           const summary = await fetchCurrentBookStatusSummary(data.user.id, book.book_id);
           setUserStatus(summary.userStatus);
         }
@@ -67,21 +76,6 @@ export default function DashboardPage() {
     }
 
     load();
-  }, []);
-
-  useEffect(() => {
-    async function loadProgress() {
-      try {
-        const { data } = await getCurrentUser();
-        if (!data.user) return;
-        const count = await fetchBooksReadCount(data.user.id);
-        setLevelInfo(getLevelInfo(count));
-      } catch {
-        setProgressError('Unable to load your progress.');
-      }
-    }
-
-    loadProgress();
   }, []);
 
   useEffect(() => {
@@ -104,12 +98,51 @@ export default function DashboardPage() {
       });
   }, []);
 
+  useEffect(() => {
+    if (!isModalOpen || !confettiRef.current) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const fire = (particleCount: number, angle: number, spread: number, originX: number) => {
+      confettiRef.current?.({
+        particleCount,
+        angle,
+        spread,
+        startVelocity: 42,
+        ticks: 180,
+        gravity: 1,
+        origin: { x: originX, y: 0.35 },
+      });
+    };
+
+    fire(80, 55, 70, 0.1);
+    const t1 = window.setTimeout(() => fire(70, 125, 70, 0.9), 180);
+    const t2 = window.setTimeout(() => fire(90, 90, 90, 0.5), 360);
+
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, [isModalOpen]);
+
   async function handleStatusChange(status: ReadingStatus) {
-    if (!currentUserId || !currentBook) return;
     setUpdatingStatus(true);
     try {
-      await updateCurrentBookStatus(currentUserId, currentBook.book_id, status);
-      const summary = await fetchCurrentBookStatusSummary(currentUserId, currentBook.book_id);
+      await updateCurrentBookStatus(currentUserId!, currentBook!.book_id, status);
+      const summary = await fetchCurrentBookStatusSummary(currentUserId!, currentBook!.book_id);
+      const prevCount = levelInfo!.booksRead;
+      const read = status === 'read';
+      const newBookCount = read ? prevCount + 1 : prevCount - 1;
+
+      setLevelInfo(getLevelInfo(newBookCount));
+      if (
+        read &&
+        (newBookCount === levelRank.Scholar ||
+          newBookCount === levelRank.Librarian ||
+          newBookCount === levelRank.Shakespeare)
+      ) {
+        setIsModalOpen(true);
+      }
+
       setUserStatus(summary.userStatus);
     } finally {
       setUpdatingStatus(false);
@@ -118,6 +151,18 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      <ReactCanvasConfetti
+        onInit={({ confetti }) => {
+          confettiRef.current = confetti;
+        }}
+        className="pointer-events-none fixed inset-0 z-30 h-full w-full"
+        style={{ width: '100%', height: '100%' }}
+      />
+      <ModalComponent
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        level={levelInfo?.level ?? 'Bookworm'}
+      />
       {/* Current Book section */}
       <section className="space-y-3  px-3">
         <div className="flex items-center justify-between">
@@ -151,11 +196,12 @@ export default function DashboardPage() {
                   </p>
                 </div>
                 {currentBook && (
-                  <div className='mt-5'>
+                  <div className="mt-5">
                     <Select
                       placeholder="Select one"
                       onChange={(status) => handleStatusChange(status as ReadingStatus)}
                       value={userStatus}
+                      isDisabled={!currentUserId || !currentBook}
                     >
                       <Label className="text-xs text-slate-500">Your reading status:</Label>
                       <Select.Trigger className="bg-slate-900">
@@ -248,7 +294,9 @@ export default function DashboardPage() {
                       {nomination.vote_count === 1 ? '' : 's'}
                     </span>
                   </div>
-                  <p className="truncate text-[11px] text-slate-400">{nomination.pitch}</p>
+                  <div className="max-w-[240px]">
+                    <p className="truncate text-[11px] text-slate-400">{nomination.pitch}</p>{' '}
+                  </div>
                 </div>
               </li>
             ))}
@@ -291,7 +339,7 @@ export default function DashboardPage() {
                 )}
                 {levelInfo.level === 'Scholar' && (
                   <>
-                    <img src="/icons/book.png" alt="Scholar" className="h-6 w-6 invert mx-1" />
+                    <img src="/icons/Scholar.png" alt="Scholar" className="h-6 w-6 invert mx-1" />
                     <span>Scholar</span>
                   </>
                 )}

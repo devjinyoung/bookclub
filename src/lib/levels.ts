@@ -2,6 +2,13 @@ import { supabaseBrowserClient } from './supabaseClient';
 
 export type Level = 'Bookworm' | 'Scholar' | 'Librarian' | 'Shakespeare';
 
+export const levelRank: Record<Level, number> = {
+  Bookworm: 0,
+  Scholar: 2,
+  Librarian: 4,
+  Shakespeare: 10,
+};
+
 export interface LevelInfo {
   level: Level;
   booksRead: number;
@@ -9,13 +16,13 @@ export interface LevelInfo {
 }
 
 export function getLevelInfo(booksRead: number): LevelInfo {
-  if (booksRead >= 10) {
+  if (booksRead >= levelRank.Shakespeare) {
     return { level: 'Shakespeare', booksRead, booksToNextLevel: null };
   }
-  if (booksRead >= 4) {
+  if (booksRead >= levelRank.Librarian) {
     return { level: 'Librarian', booksRead, booksToNextLevel: 10 - booksRead };
   }
-  if (booksRead >= 2) {
+  if (booksRead >= levelRank.Scholar) {
     return { level: 'Scholar', booksRead, booksToNextLevel: 4 - booksRead };
   }
   return { level: 'Bookworm', booksRead, booksToNextLevel: 2 - booksRead };

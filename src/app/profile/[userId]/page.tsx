@@ -203,7 +203,7 @@ export default function ProfilePage() {
             )}{' '}
             {levelInfo.level === 'Scholar' && (
               <span className="inline-flex items-center gap-1">
-                <img src="/icons/book.png" alt="Scholar" className="h-6 w-6 invert mx-1" />
+                <img src="/icons/Scholar.png" alt="Scholar" className="h-6 w-6 invert mx-1" />
                 <span>Scholar</span>
               </span>
             )}
