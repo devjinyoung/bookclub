@@ -142,14 +142,22 @@ export default function ProfilePage() {
       router.replace('/login');
     }
   }
-
+console.log("profile?.avatar_url", profile);
   return (
     <div className="space-y-4">
       <header className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-4">
+          {profile?.avatar_url ? (
+            <img
+              src={profile.avatar_url}
+              alt={`${profile.name} avatar`}
+              className="h-12 w-12 rounded-full object-cover"
+            />
+          ) : (
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-500 text-base font-semibold text-slate-950">
             {initials}
           </div>
+          )}
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{profile?.name ?? 'Member'}</h1>
             <div className="max-w-[200px]">

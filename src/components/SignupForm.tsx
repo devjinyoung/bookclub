@@ -8,6 +8,7 @@ export type SignupFormValues = {
   email: string;
   password: string;
   bio: string;
+  avatar: File | null;
 };
 
 type SignupFormProps = {
@@ -19,6 +20,7 @@ export default function SignupForm({ onSubmit }: SignupFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [bio, setBio] = useState('');
+  const [avatar, setAvatar] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +35,7 @@ export default function SignupForm({ onSubmit }: SignupFormProps) {
 
     setIsSubmitting(true);
     try {
-      await onSubmit({ name, email, password, bio });
+      await onSubmit({ name, email, password, bio, avatar });
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'Something went wrong while signing up.';
@@ -89,6 +91,20 @@ export default function SignupForm({ onSubmit }: SignupFormProps) {
         />
       </div>
 
+      <div className="space-y-1">
+        <label className="text-sm font-medium text-slate-200" htmlFor="avatar">
+          Avatar (optional)
+        </label>
+        <input
+          id="avatar"
+          type="file"
+          accept="image/*"
+          className="block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 file:mr-3 file:rounded-md file:border-0 file:bg-slate-700 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+          onChange={(e) => setAvatar(e.target.files?.[0] ?? null)}
+        />
+
+      </div>
+
       {error && (
         <p className="text-sm text-red-400" role="alert">
           {error}
@@ -105,4 +121,6 @@ export default function SignupForm({ onSubmit }: SignupFormProps) {
     </form>
   );
 }
+
+
 

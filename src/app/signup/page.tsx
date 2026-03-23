@@ -8,8 +8,8 @@ export default function SignupPage() {
   const router = useRouter();
 
   async function handleSubmit(values: SignupFormValues) {
-    const { name, email, password, bio } = values;
-    await signUpWithEmail({ name, email, password, bio });
+    const { name, email, password, bio, avatar } = values;
+    await signUpWithEmail({ name, email, password, bio, avatar });
     router.push('/');
   }
 
