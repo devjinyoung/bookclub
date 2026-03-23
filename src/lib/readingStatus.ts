@@ -1,9 +1,9 @@
 import { supabaseBrowserClient } from './supabaseClient';
 
-export type ReadingStatus = 'reading' | 'read';
+export type ReadingStatus = 'reading' | 'read' | 'not_started';
 
 export interface CurrentBookStatusSummary {
-  userStatus: ReadingStatus | 'not_started';
+  userStatus: ReadingStatus;
   counts: {
     reading: number;
     read: number;
@@ -41,9 +41,7 @@ export async function fetchCurrentBookStatusSummary(
   if (membersRes.error) throw membersRes.error;
 
   const userRow = userRes.data;
-  const userStatus: ReadingStatus | 'not_started' = userRow
-    ? (userRow.status as ReadingStatus)
-    : 'not_started';
+  const userStatus: ReadingStatus = userRow ? (userRow.status as ReadingStatus) : 'not_started';
 
   const totalMembers = membersRes.data?.length ?? 0;
   let reading = 0;
@@ -69,19 +67,8 @@ export async function fetchCurrentBookStatusSummary(
 export async function updateCurrentBookStatus(
   userId: string,
   bookId: string,
-  status: ReadingStatus | 'not_started',
+  status: ReadingStatus,
 ): Promise<void> {
-  if (status === 'not_started') {
-    const { error } = await supabaseBrowserClient
-      .from('reading_statuses')
-      .delete()
-      .eq('user_id', userId)
-      .eq('book_id', bookId);
-
-    if (error) throw error;
-    return;
-  }
-
   const { error } = await supabaseBrowserClient.from('reading_statuses').upsert(
     {
       user_id: userId,

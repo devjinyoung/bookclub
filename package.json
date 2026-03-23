@@ -11,6 +11,8 @@
     "format:fix": "prettier . --write"
   },
   "dependencies": {
+    "@heroui/react": "^3.0.1",
+    "@heroui/styles": "^3.0.1",
     "@supabase/supabase-js": "^2.99.2",
     "next": "16.1.6",
     "react": "19.2.3",
@@ -24,7 +26,6 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
-    "prettier": "^3.3.0",
     "prettier": "^3.8.1",
     "tailwindcss": "^4",
     "typescript": "^5"

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Label, ListBox, Select } from '@heroui/react';
 import {
   fetchCurrentBook,
   type CurrentBookWithMeta,
@@ -24,7 +25,7 @@ export default function DashboardPage() {
   const [currentBookError, setCurrentBookError] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  const [userStatus, setUserStatus] = useState<ReadingStatus | 'not_started'>('not_started');
+  const [userStatus, setUserStatus] = useState<ReadingStatus | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -103,6 +104,18 @@ export default function DashboardPage() {
       });
   }, []);
 
+  async function handleStatusChange(status: ReadingStatus) {
+    if (!currentUserId || !currentBook) return;
+    setUpdatingStatus(true);
+    try {
+      await updateCurrentBookStatus(currentUserId, currentBook.book_id, status);
+      const summary = await fetchCurrentBookStatusSummary(currentUserId, currentBook.book_id);
+      setUserStatus(summary.userStatus);
+    } finally {
+      setUpdatingStatus(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Current Book section */}
@@ -128,46 +141,44 @@ export default function DashboardPage() {
             {!loadingCurrentBook && !currentBookError && (
               <>
                 <div>
-                  <p className="text-sm font-medium text-slate-200">
+                  <p className="text-base font-medium text-slate-200">
                     {currentBook ? currentBook.title : 'No book selected'}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-sm text-slate-500">
                     {currentBook
                       ? currentBook.author
                       : 'When the club picks a book, it will appear here.'}
                   </p>
                 </div>
                 {currentBook && (
-                  <div className="text-[11px]">
-                    <label htmlFor="current-book-status" className="mb-1 block text-slate-400">
-                      Your status
-                    </label>
-                    <select
-                      id="current-book-status"
-                      disabled={!currentUserId || updatingStatus}
+                  <div className='mt-5'>
+                    <Select
+                      placeholder="Select one"
+                      onChange={(status) => handleStatusChange(status as ReadingStatus)}
                       value={userStatus}
-                      onChange={async (e) => {
-                        if (!currentUserId || !currentBook) return;
-                        const next = e.target.value as ReadingStatus | 'not_started';
-
-                        setUpdatingStatus(true);
-                        try {
-                          await updateCurrentBookStatus(currentUserId, currentBook.book_id, next);
-                          const summary = await fetchCurrentBookStatusSummary(
-                            currentUserId,
-                            currentBook.book_id,
-                          );
-                          setUserStatus(summary.userStatus);
-                        } finally {
-                          setUpdatingStatus(false);
-                        }
-                      }}
-                      className="w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-50 outline-none ring-0 ring-sky-500 focus:border-sky-500 focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      <option value="not_started">Not Started</option>
-                      <option value="reading">Reading</option>
-                      <option value="read">Read</option>
-                    </select>
+                      <Label className="text-xs text-slate-500">Your reading status:</Label>
+                      <Select.Trigger className="bg-slate-900">
+                        <Select.Value className="text-slate-200 text-sm" />
+                        <Select.Indicator />
+                      </Select.Trigger>
+                      <Select.Popover className="bg-slate-900">
+                        <ListBox>
+                          <ListBox.Item id="not_started" textValue="Not Started">
+                            Not Started
+                            <ListBox.ItemIndicator />
+                          </ListBox.Item>
+                          <ListBox.Item id="reading" textValue="Reading">
+                            Reading
+                            <ListBox.ItemIndicator />
+                          </ListBox.Item>
+                          <ListBox.Item id="read" textValue="Read">
+                            Read
+                            <ListBox.ItemIndicator />
+                          </ListBox.Item>
+                        </ListBox>
+                      </Select.Popover>
+                    </Select>
                   </div>
                 )}
               </>
