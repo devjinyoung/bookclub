@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { getCurrentUser } from '@/lib/profile';
+import { supabaseBrowserClient } from '@/lib/supabaseClient';
 
 type Tab = {
   href: string;
@@ -27,8 +28,20 @@ export function BottomNav() {
     getCurrentUser().then(({ data }) => {
       if (data.user) {
         setCurrentUserId(data.user.id);
+      } else {
+        setCurrentUserId(null);
       }
     });
+
+    const {
+      data: { subscription },
+    } = supabaseBrowserClient.auth.onAuthStateChange((_event, session) => {
+      setCurrentUserId(session?.user?.id ?? null);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const isProfileActive = pathname.startsWith('/profile');

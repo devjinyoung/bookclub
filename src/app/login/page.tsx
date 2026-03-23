@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signInWithEmail } from '@/lib/authClient';
 
@@ -87,6 +88,12 @@ export default function LoginPage() {
 
         <p className="mt-2 text-xs text-slate-500">
           Forgot password? <span className="font-medium text-slate-300">Coming soon.</span>
+        </p>
+        <p className="text-xs text-slate-400">
+          Don&apos;t have an account?{' '}
+          <Link href="/signup" className="font-medium text-sky-400 hover:text-sky-300">
+            Sign up
+          </Link>
         </p>
       </form>
     </div>

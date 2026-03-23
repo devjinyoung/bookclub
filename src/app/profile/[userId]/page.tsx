@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { getProfileById, updateProfile } from '@/lib/profile';
 import { fetchBooksReadCount, getLevelInfo, type LevelInfo } from '@/lib/levels';
 import { supabaseBrowserClient } from '@/lib/supabaseClient';
@@ -24,6 +24,7 @@ interface ReadBook {
 
 export default function ProfilePage() {
   const params = useParams<{ userId: string }>();
+  const router = useRouter();
   const userId = params.userId;
 
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -39,6 +40,7 @@ export default function ProfilePage() {
   const [readBooksError, setReadBooksError] = useState<string | null>(null);
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     supabaseBrowserClient.auth.getUser().then(({ data: { user } }) => {
@@ -125,6 +127,21 @@ export default function ProfilePage() {
       .map((part) => part[0]?.toUpperCase())
       .slice(0, 2)
       .join('') ?? '?';
+
+  async function handleLogout() {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+
+    try {
+      await supabaseBrowserClient.auth.signOut();
+    } finally {
+      if (typeof document !== 'undefined') {
+        document.cookie = 'bookclub-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      }
+
+      router.replace('/login');
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -269,9 +286,11 @@ export default function ProfilePage() {
       {isOwnProfile && (
         <button
           type="button"
+          onClick={handleLogout}
+          disabled={isLoggingOut}
           className="rounded-md border border-slate-700 px-3 py-1 text-[10px] font-medium text-slate-200 hover:bg-slate-800"
         >
-          Logout
+          {isLoggingOut ? 'Logging out...' : 'Logout'}
         </button>
       )}
     </div>
