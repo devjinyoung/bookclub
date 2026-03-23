@@ -8,13 +8,7 @@ interface SignupParams {
   avatar?: File | null;
 }
 
-export async function signUpWithEmail({
-  name,
-  email,
-  password,
-  bio,
-  avatar,
-}: SignupParams) {
+export async function signUpWithEmail({ name, email, password, bio, avatar }: SignupParams) {
   const normalizedBio = bio ?? '';
 
   const { data, error } = await supabaseBrowserClient.auth.signUp({
@@ -59,10 +53,9 @@ export async function signUpWithEmail({
 
 async function uploadAvatarAndGetUrl(userId: string, avatar: File): Promise<string> {
   const extension = getFileExtension(avatar);
-  const path = `${userId}/avatar.${extension}`;
+  const path = `${userId}/avatar-${Date.now()}.${extension}`;
 
   const { error } = await supabaseBrowserClient.storage.from('avatars').upload(path, avatar, {
-    upsert: true,
     contentType: avatar.type || undefined,
   });
 

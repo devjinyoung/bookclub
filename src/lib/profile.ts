@@ -22,15 +22,32 @@ export type UpdateProfileParams = {
   userId: string;
   name: string;
   bio: string | null;
+  avatar?: File | null;
 };
 
-export async function updateProfile({ userId, name, bio }: UpdateProfileParams) {
+export async function updateProfile({ userId, name, bio, avatar }: UpdateProfileParams) {
+  let avatarUrl: string | null | undefined;
+
+  if (avatar) {
+    avatarUrl = await uploadAvatarAndGetUrl(userId, avatar);
+  }
+
+  const updates: {
+    name: string;
+    bio: string | null;
+    avatar_url?: string | null;
+  } = {
+    name,
+    bio,
+  };
+
+  if (avatarUrl !== undefined) {
+    updates.avatar_url = avatarUrl;
+  }
+
   const { data, error } = await supabaseBrowserClient
     .from('profiles')
-    .update({
-      name,
-      bio,
-    })
+    .update(updates)
     .eq('id', userId)
     .select('id, name, bio, avatar_url')
     .single();
@@ -40,4 +57,35 @@ export async function updateProfile({ userId, name, bio }: UpdateProfileParams) 
   }
 
   return data;
+}
+
+async function uploadAvatarAndGetUrl(userId: string, avatar: File): Promise<string> {
+  const extension = getFileExtension(avatar);
+  const path = `${userId}/avatar-${Date.now()}.${extension}`;
+
+  const { error } = await supabaseBrowserClient.storage.from('avatars').upload(path, avatar, {
+    contentType: avatar.type || undefined,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  const { data } = supabaseBrowserClient.storage.from('avatars').getPublicUrl(path);
+  return data.publicUrl;
+}
+
+function getFileExtension(file: File): string {
+  const fromName = file.name.split('.').pop()?.toLowerCase();
+  if (fromName && fromName.length <= 5) {
+    return fromName;
+  }
+
+  const fromType = file.type.split('/').pop()?.toLowerCase();
+  if (fromType) {
+    if (fromType === 'jpeg') return 'jpg';
+    return fromType;
+  }
+
+  return 'png';
 }

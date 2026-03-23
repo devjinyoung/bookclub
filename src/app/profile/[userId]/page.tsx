@@ -142,7 +142,6 @@ export default function ProfilePage() {
       router.replace('/login');
     }
   }
-console.log("profile?.avatar_url", profile);
   return (
     <div className="space-y-4">
       <header className="flex items-start justify-between gap-4">
@@ -151,12 +150,12 @@ console.log("profile?.avatar_url", profile);
             <img
               src={profile.avatar_url}
               alt={`${profile.name} avatar`}
-              className="h-12 w-12 rounded-full object-cover"
+              className="h-27 w-27 rounded-full object-cover"
             />
           ) : (
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-500 text-base font-semibold text-slate-950">
-            {initials}
-          </div>
+            <div className="flex h-27 w-27 items-center justify-center rounded-full bg-sky-500 text-base font-semibold text-slate-950">
+              {initials}
+            </div>
           )}
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{profile?.name ?? 'Member'}</h1>
@@ -182,9 +181,10 @@ console.log("profile?.avatar_url", profile);
         <EditProfileForm
           initialName={profile.name}
           initialBio={profile.bio}
+          initialAvatarUrl={profile.avatar_url}
           onCancel={() => setIsEditingProfile(false)}
-          onSave={async ({ name, bio }) => {
-            const updated = await updateProfile({ userId, name, bio });
+          onSave={async ({ name, bio, avatar }) => {
+            const updated = await updateProfile({ userId, name, bio, avatar });
             setProfile(updated);
             setIsEditingProfile(false);
           }}

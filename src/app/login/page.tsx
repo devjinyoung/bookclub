@@ -35,11 +35,6 @@ export default function LoginPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Log in</h1>
-        <p className="mt-1 text-sm text-slate-400">Sign in to your book club account.</p>
-      </header>
-
       <form
         onSubmit={handleSubmit}
         className="space-y-4 rounded-xl border border-slate-800 bg-slate-900/40 p-4"

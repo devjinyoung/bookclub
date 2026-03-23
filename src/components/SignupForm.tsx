@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import NameBioFields from '@/components/NameBioFields';
-
 export type SignupFormValues = {
   name: string;
   email: string;
@@ -37,8 +37,7 @@ export default function SignupForm({ onSubmit }: SignupFormProps) {
     try {
       await onSubmit({ name, email, password, bio, avatar });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Something went wrong while signing up.';
+      const message = err instanceof Error ? err.message : 'Something went wrong while signing up.';
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -75,10 +74,7 @@ export default function SignupForm({ onSubmit }: SignupFormProps) {
       </div>
 
       <div className="space-y-1">
-        <label
-          className="text-sm font-medium text-slate-200"
-          htmlFor="password"
-        >
+        <label className="text-sm font-medium text-slate-200" htmlFor="password">
           Password
         </label>
         <input
@@ -102,7 +98,6 @@ export default function SignupForm({ onSubmit }: SignupFormProps) {
           className="block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 file:mr-3 file:rounded-md file:border-0 file:bg-slate-700 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
           onChange={(e) => setAvatar(e.target.files?.[0] ?? null)}
         />
-
       </div>
 
       {error && (
@@ -118,9 +113,13 @@ export default function SignupForm({ onSubmit }: SignupFormProps) {
       >
         {isSubmitting ? 'Creating account...' : 'Create account'}
       </button>
+      <p className="text-xs text-slate-400">
+        {' '}
+        Already have an account?{' '}
+        <Link href="/login" className="font-medium text-sky-400 hover:text-sky-300">
+          Login
+        </Link>
+      </p>
     </form>
   );
 }
-
-
-

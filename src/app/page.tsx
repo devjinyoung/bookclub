@@ -111,7 +111,7 @@ export default function DashboardPage() {
           <h2 className="text-sm font-semibold text-slate-200">Currently Reading</h2>
         </div>
         <div className="flex gap-3">
-          <div className="flex h-24 w-18 items-center justify-center overflow-hidden rounded-md bg-slate-800 text-[10px] text-slate-500">
+          <div className="flex h-32 w-24 items-center justify-center overflow-hidden rounded-md bg-slate-800 text-[10px] text-slate-500">
             {currentBook && currentBook.cover_image_url ? (
               <img
                 src={currentBook.cover_image_url}

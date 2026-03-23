@@ -24,6 +24,9 @@ export function BottomNav() {
   const router = useRouter();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
+  const hiddenRoutes = ['/login', '/signup'];
+  const shouldHideNav = hiddenRoutes.includes(pathname);
+
   useEffect(() => {
     getCurrentUser().then(({ data }) => {
       if (data.user) {
@@ -45,6 +48,10 @@ export function BottomNav() {
   }, []);
 
   const isProfileActive = pathname.startsWith('/profile');
+
+  if (shouldHideNav) {
+    return null;
+  }
 
   return (
     <nav className="w-full sticky bottom-0 left-0 right-0 border-t border-slate-800 bg-black">

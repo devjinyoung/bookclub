@@ -35,10 +35,10 @@ A small web app for running a book club: pick a current book, nominate and vote 
 
 ## Scripts
 
-| Command        | Description              |
-|----------------|--------------------------|
-| `npm run dev`  | Start dev server         |
-| `npm run build`| Production build         |
-| `npm run start`| Run production server    |
-| `npm run lint` | Run ESLint               |
-| `npm run format:fix` | Format with Prettier |
+| Command              | Description           |
+| -------------------- | --------------------- |
+| `npm run dev`        | Start dev server      |
+| `npm run build`      | Production build      |
+| `npm run start`      | Run production server |
+| `npm run lint`       | Run ESLint            |
+| `npm run format:fix` | Format with Prettier  |

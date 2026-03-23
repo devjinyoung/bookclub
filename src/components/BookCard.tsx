@@ -42,7 +42,7 @@ export function BookCard({
   className,
 }: BookCardProps) {
   const actionText = actionButtonLoading
-    ? actionButtonLoadingText ?? 'Please wait…'
+    ? (actionButtonLoadingText ?? 'Please wait…')
     : actionButtonLabel;
 
   return (
