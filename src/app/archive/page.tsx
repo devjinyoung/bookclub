@@ -5,6 +5,7 @@ import { fetchArchivedBooks, type ArchivedBookWithMeta } from '@/lib/archive';
 import { BookCard } from '@/components/BookCard';
 import { getCurrentUser } from '@/lib/profile';
 import { updateCurrentBookStatus } from '@/lib/readingStatus';
+import { supabaseBrowserClient } from '@/lib/supabaseClient';
 
 const MONTH_NAMES = [
   'January',
@@ -28,6 +29,7 @@ export default function ArchivePage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const [readBookIds, setReadBookIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchArchivedBooks()
@@ -52,6 +54,26 @@ export default function ArchivePage() {
       });
   }, []);
 
+  useEffect(() => {
+    if (!currentUserId || archivedBooks.length === 0) {
+      setReadBookIds(new Set());
+      return;
+    }
+
+    const archivedBookIds = archivedBooks.map((entry) => entry.book.id);
+    supabaseBrowserClient
+      .from('reading_statuses')
+      .select('book_id')
+      .eq('user_id', currentUserId)
+      .eq('status', 'read')
+      .in('book_id', archivedBookIds)
+      .then(({ data, error }) => {
+        if (error) return;
+        const next = new Set<string>((data ?? []).map((row: any) => row.book_id as string));
+        setReadBookIds(next);
+      });
+  }, [currentUserId, archivedBooks]);
+
   async function handleMarkAsRead(bookId: string) {
     if (!currentUserId) return;
 
@@ -59,6 +81,11 @@ export default function ArchivePage() {
     setUpdateError(null);
     try {
       await updateCurrentBookStatus(currentUserId, bookId, 'read');
+      setReadBookIds((prev) => {
+        const next = new Set(prev);
+        next.add(bookId);
+        return next;
+      });
     } catch {
       setUpdateError('Unable to update reading status.');
     } finally {
@@ -108,7 +135,7 @@ export default function ArchivePage() {
                 coverImageUrl={entry.book.cover_image_url}
                 subtitle={`${MONTH_NAMES[entry.month - 1]} ${entry.year}`}
                 className="h-full"
-                actionButtonLabel="Mark as read"
+                actionButtonLabel={readBookIds.has(entry.book.id) ? undefined : 'Mark as read'}
                 actionButtonLoadingText="Marking…"
                 actionButtonDisabled={!currentUserId || updatingStatus}
                 actionButtonLoading={updatingStatus}
