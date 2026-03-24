@@ -46,19 +46,19 @@ export default function MembersPage() {
   return (
     <div className="space-y-4">
       <header>
-        <p className="mt-1 text-sm text-slate-400">
-          Meet your fellow club members and see their reading progress.
+        <p className="mt-1 text-slate-400">
+          Meet your club members and see their reading progress.
         </p>
       </header>
 
       {loading && (
-        <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-xs text-slate-500">
+        <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4  text-slate-500">
           Loading members…
         </div>
       )}
 
       {error && (
-        <div className="rounded-xl border border-red-900 bg-red-950/40 p-4 text-xs text-red-300">
+        <div className="rounded-xl border border-red-900 bg-red-950/40 p-4  text-red-300">
           {error}
         </div>
       )}
@@ -86,7 +86,7 @@ export default function MembersPage() {
                 className="rounded-xl border border-slate-800 bg-slate-950/40 p-3"
               >
                 <Link href={`/profile/${member.id}`} className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 text-xs font-semibold text-slate-950">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-500  font-semibold text-slate-950">
                     {initials}
                   </div>
                   <div className="flex-1">

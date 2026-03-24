@@ -58,13 +58,13 @@ export function BookSearch({ onSelect }: BookSearchProps) {
         <input
           type="text"
           placeholder="Search for a book..."
-          className="flex-1 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none ring-0 ring-sky-500 focus:border-sky-500 focus:ring-1"
+          className="flex-1 rounded-md border border-slate-700 bg-slate-900 px-3 py-2  text-slate-50 outline-none ring-0 ring-sky-500 focus:border-sky-500 focus:ring-1"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
 
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className=" text-red-400">{error}</p>}
 
       {results.length > 0 && (
         <ul className="max-h-60 space-y-1 overflow-y-auto rounded-md border border-slate-800 bg-slate-950/80 p-2 text-sm">
@@ -83,7 +83,7 @@ export function BookSearch({ onSelect }: BookSearchProps) {
                   {book.coverImageUrl ? 'Cover' : 'No cover'}
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-slate-200">{book.title}</p>
+                  <p className="font-medium text-slate-200">{book.title}</p>
                   <p className="text-[11px] text-slate-500">{book.author}</p>
                 </div>
               </button>

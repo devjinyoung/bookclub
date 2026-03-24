@@ -166,10 +166,10 @@ export default function DashboardPage() {
       {/* Current Book section */}
       <section className="space-y-3  px-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-200">Currently Reading</h2>
+          <h2 className="font-semibold text-slate-200">Currently Reading</h2>
         </div>
         <div className="flex gap-3">
-          <div className="flex h-32 w-24 items-center justify-center overflow-hidden rounded-md bg-slate-800 text-[10px] text-slate-500">
+          <div className="flex h-42 w-32 items-center justify-center overflow-hidden rounded-md bg-slate-800 text-[10px] text-slate-500">
             {currentBook && currentBook.cover_image_url ? (
               <img
                 src={currentBook.cover_image_url}
@@ -186,10 +186,10 @@ export default function DashboardPage() {
             {!loadingCurrentBook && !currentBookError && (
               <>
                 <div>
-                  <p className="text-base font-medium text-slate-200">
+                  <h1 className="text-xl font-bold text-slate-200">
                     {currentBook ? currentBook.title : 'No book selected'}
-                  </p>
-                  <p className="text-sm text-slate-500">
+                  </h1>
+                  <p className="text-base text-slate-200">
                     {currentBook
                       ? currentBook.author
                       : 'When the club picks a book, it will appear here.'}
@@ -203,9 +203,9 @@ export default function DashboardPage() {
                       value={userStatus}
                       isDisabled={!currentUserId || !currentBook}
                     >
-                      <Label className="text-xs text-slate-500">Your reading status:</Label>
+                      <Label className="text-sm text-slate-500">Your reading status:</Label>
                       <Select.Trigger className="bg-slate-900">
-                        <Select.Value className="text-slate-200 text-sm" />
+                        <Select.Value className="text-slate-200" />
                         <Select.Indicator />
                       </Select.Trigger>
                       <Select.Popover className="bg-slate-900">
@@ -233,7 +233,7 @@ export default function DashboardPage() {
           <div>
             <button
               type="button"
-              className="rounded-md border border-slate-700 px-3 py-1 text-xs font-medium text-slate-200 hover:bg-slate-800"
+              className="rounded-md border border-slate-700 px-3 py-1 font-medium text-slate-400 hover:bg-slate-800"
               disabled={!currentUserId}
               onClick={() => {
                 setMode(currentBook ? 'edit' : 'set');
@@ -250,16 +250,16 @@ export default function DashboardPage() {
       {/* Top Nominations */}
       <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-200">Top Nominations</h2>
-          <Link href="/nominations" className="text-xs font-medium text-sky-400 hover:text-sky-300">
+          <h2 className="font-semibold text-slate-200">Top Nominations</h2>
+          <Link href="/nominations" className="font-medium text-sky-400 hover:text-sky-300">
             See all →
           </Link>
         </div>
-        <p className="text-[11px] text-slate-500">
+        <p className=" text-slate-500">
           These are books nominated by club members. You can vote on them to help decide the next
           read.
         </p>
-        {nominationsError && <p className="text-xs text-red-400">{nominationsError}</p>}
+        {nominationsError && <p className="text-red-400">{nominationsError}</p>}
         {!nominationsError && topNominations.length === 0 && (
           <p className="text-xs text-slate-500">
             Nominated books with the most votes will appear here.
@@ -272,7 +272,7 @@ export default function DashboardPage() {
                 key={nomination.id}
                 className="flex gap-3 rounded-lg border border-slate-800 bg-slate-950/40 p-2"
               >
-                <div className="flex h-12 w-9 items-center justify-center overflow-hidden rounded-md bg-slate-800 text-[10px] text-slate-500">
+                <div className="flex h-20 w-14 items-center justify-center overflow-hidden rounded-md bg-slate-800 text-[10px] text-slate-500">
                   {nomination.book.cover_image_url ? (
                     <img
                       src={nomination.book.cover_image_url}
@@ -286,8 +286,8 @@ export default function DashboardPage() {
                 <div className="flex-1 space-y-0.5">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-xs font-medium text-slate-200">{nomination.book.title}</p>
-                      <p className="text-[11px] text-slate-500">{nomination.book.author}</p>
+                      <p className=" text-slate-200">{nomination.book.title}</p>
+                      <p className="text-slate-500">{nomination.book.author}</p>
                     </div>
                     <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300 whitespace-nowrap">
                       {nomination.vote_count} vote
@@ -295,7 +295,7 @@ export default function DashboardPage() {
                     </span>
                   </div>
                   <div className="max-w-[240px]">
-                    <p className="truncate text-[11px] text-slate-400">{nomination.pitch}</p>{' '}
+                    <p className="truncate text-sm text-slate-400">{nomination.pitch}</p>{' '}
                   </div>
                 </div>
               </li>
@@ -307,7 +307,7 @@ export default function DashboardPage() {
       {/* Your Progress */}
       <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
         <div className="relative flex items-center">
-          <h2 className="text-sm font-semibold text-slate-200">Your Progress</h2>
+          <h2 className="font-semibold text-slate-200">Your Progress</h2>
           <button
             type="button"
             onClick={() => setShowProgressInfo((v) => !v)}
@@ -327,9 +327,9 @@ export default function DashboardPage() {
         </div>
         {progressError && <p className="text-xs text-red-400">{progressError}</p>}
         {!progressError && levelInfo && (
-          <div className="space-y-2 text-xs text-slate-300">
+          <div className="space-y-2 text-slate-300">
             <p className="flex items-center gap-1">
-              <span>Level:</span>
+              <span>Lvl:</span>
               <span className="inline-flex items-center gap-1 font-semibold">
                 {levelInfo.level === 'Bookworm' && (
                   <>
@@ -377,7 +377,7 @@ export default function DashboardPage() {
                           style={{ width: `${percent}%` }}
                         />
                       </div>
-                      <p className="text-[11px] text-slate-500">
+                      <p className="text-sm text-slate-500">
                         {levelInfo.booksToNextLevel === 1
                           ? '1 book away from leveling up!'
                           : `${levelInfo.booksToNextLevel} books away from leveling up!`}
@@ -401,12 +401,12 @@ export default function DashboardPage() {
       {/* Recent Archive */}
       <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-200">Bookclub Archives</h2>
-          <Link href="/archive" className="text-xs font-medium text-sky-400 hover:text-sky-300">
+          <h2 className=" font-semibold text-slate-200">Bookclub Archives</h2>
+          <Link href="/archive" className="font-medium text-sky-400 hover:text-sky-300">
             See all →
           </Link>
         </div>
-        {archiveError && <p className="text-xs text-red-400">{archiveError}</p>}
+        {archiveError && <p className="text-red-400">{archiveError}</p>}
         {!archiveError && recentArchived.length === 0 && (
           <p className="text-xs text-slate-500">
             When the club finishes a book, it will appear here.
@@ -419,7 +419,7 @@ export default function DashboardPage() {
                 key={entry.id}
                 className="flex gap-3 rounded-lg border border-slate-800 bg-slate-950/40 p-2"
               >
-                <div className="flex h-12 w-9 items-center justify-center overflow-hidden rounded-md bg-slate-800 text-[10px] text-slate-500">
+                <div className="flex h-20 w-14  items-center justify-center overflow-hidden rounded-md bg-slate-800 text-[10px] text-slate-500">
                   {entry.book.cover_image_url ? (
                     <img
                       src={entry.book.cover_image_url}
@@ -433,8 +433,8 @@ export default function DashboardPage() {
                 <div className="flex-1 space-y-0.5">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-xs font-medium text-slate-200">{entry.book.title}</p>
-                      <p className="text-[11px] text-slate-500">{entry.book.author}</p>
+                      <p className="font-medium text-slate-200">{entry.book.title}</p>
+                      <p className="text-slate-500">{entry.book.author}</p>
                     </div>
                   </div>
                 </div>

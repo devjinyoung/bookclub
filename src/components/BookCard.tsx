@@ -48,11 +48,11 @@ export function BookCard({
   return (
     <div
       onClick={onClick}
-      className={`group flex gap-3 rounded-lg border border-slate-800 bg-slate-950/40 p-2 ${
+      className={`group gap-3 rounded-lg border border-slate-800 bg-slate-950/40 p-2 ${
         className ?? ''
       }`}
     >
-      <div className="flex h-20 w-14 items-center justify-center overflow-hidden rounded-md bg-slate-800 text-[10px] text-slate-500">
+      <div className="flex w-full h-48 items-center justify-center overflow-hidden rounded-md bg-slate-800 text-[10px] text-slate-500">
         {coverImageUrl ? (
           <img src={coverImageUrl} alt={title} className="h-full w-full object-cover" />
         ) : (
@@ -60,16 +60,16 @@ export function BookCard({
         )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-1">
-        <p className="line-clamp-2 text-xs font-medium text-slate-200">{title}</p>
+      <div className="flex flex-1 flex-col gap-1 mt-2">
+        <p className="line-clamp-2 text-slate-200 text-lg">{title}</p>
 
-        {author && <p className="line-clamp-1 text-[11px] text-slate-500">{author}</p>}
+        {author && <p className="line-clamp-1 text-slate-500">{author}</p>}
 
-        {subtitle && <p className="line-clamp-2 text-[11px] text-slate-500">{subtitle}</p>}
+        {subtitle && <p className="line-clamp-2  text-slate-500">{subtitle}</p>}
 
         {ctaLabel && (
           <div className="mt-1">
-            <span className="inline-flex items-center rounded-full bg-sky-500/10 px-2 py-0.5 text-[11px] font-medium text-sky-300 group-hover:bg-sky-500/20">
+            <span className="inline-flex items-center rounded-full bg-sky-500/10 px-2 py-0.5 text-sm text-sky-300 group-hover:bg-sky-500/20">
               {ctaLabel}
             </span>
           </div>
@@ -84,7 +84,7 @@ export function BookCard({
                 e.stopPropagation();
                 onActionButtonClick?.();
               }}
-              className="text-[11px] font-medium text-sky-400 hover:text-sky-300 disabled:cursor-not-allowed disabled:opacity-50"
+              className=" font-medium text-sky-400 hover:text-sky-300 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={actionButtonDisabled}
             >
               {actionText}
