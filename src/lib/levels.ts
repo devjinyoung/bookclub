@@ -2,6 +2,7 @@ import { supabaseBrowserClient } from './supabaseClient';
 
 export type Level = 'Bookworm' | 'Scholar' | 'Librarian' | 'Shakespeare';
 
+// Number of books required to reach the level.
 export const levelRank: Record<Level, number> = {
   Bookworm: 0,
   Scholar: 2,

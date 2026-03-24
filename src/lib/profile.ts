@@ -1,5 +1,20 @@
 import { supabaseBrowserClient } from './supabaseClient';
 
+export type UpdateProfileParams = {
+  userId: string;
+  name: string;
+  bio: string | null;
+  avatar?: File | null;
+};
+
+export interface Profile {
+  id: string;
+  name: string;
+  bio: string | null;
+  avatar_url: string | null;
+  created_at?: string | null;
+}
+
 export async function getCurrentUser() {
   return supabaseBrowserClient.auth.getUser();
 }
@@ -7,7 +22,7 @@ export async function getCurrentUser() {
 export async function getProfileById(userId: string) {
   const { data, error } = await supabaseBrowserClient
     .from('profiles')
-    .select('id, name, bio, avatar_url')
+    .select('id, name, bio, avatar_url, created_at')
     .eq('id', userId)
     .single();
 
@@ -17,13 +32,6 @@ export async function getProfileById(userId: string) {
 
   return data;
 }
-
-export type UpdateProfileParams = {
-  userId: string;
-  name: string;
-  bio: string | null;
-  avatar?: File | null;
-};
 
 export async function updateProfile({ userId, name, bio, avatar }: UpdateProfileParams) {
   let avatarUrl: string | null | undefined;

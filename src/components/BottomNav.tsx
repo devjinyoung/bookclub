@@ -72,25 +72,6 @@ export function BottomNav() {
             </Link>
           );
         })}
-
-        <button
-          type="button"
-          onClick={() => {
-            if (currentUserId) {
-              router.push(`/profile/${currentUserId}`);
-            } else {
-              router.push('/login');
-            }
-          }}
-          className={`flex flex-col items-center justify-center gap-0.5 rounded-md px-2 py-1 text-xs transition-colors ${
-            isProfileActive ? 'text-white' : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <span className="leading-none">
-            <img src="/icons/person.png" alt="Profile" className="h-5 w-5 invert" />
-          </span>
-          <span className="leading-none">Profile</span>
-        </button>
       </div>
     </nav>
   );
