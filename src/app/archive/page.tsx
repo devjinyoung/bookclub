@@ -6,6 +6,7 @@ import { BookCard } from '@/components/BookCard';
 import { getCurrentUser } from '@/lib/profile';
 import { updateCurrentBookStatus } from '@/lib/readingStatus';
 import { supabaseBrowserClient } from '@/lib/supabaseClient';
+import ModalComponent from '@/components/Modal';
 
 const MONTH_NAMES = [
   'January',
@@ -30,6 +31,7 @@ export default function ArchivePage() {
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [readBookIds, setReadBookIds] = useState<Set<string>>(new Set());
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchArchivedBooks()
@@ -95,10 +97,13 @@ export default function ArchivePage() {
 
   return (
     <div className="space-y-4">
+      <ModalComponent
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        level={'Bookworm'}
+      />
       <header>
-        <p className="mt-1 text-sm text-slate-400">
-          A shared history of every book your club has read.
-        </p>
+        <p className="mt-1 text-slate-400">A shared history of every book your club has read.</p>
       </header>
 
       {loading && (

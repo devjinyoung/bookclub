@@ -1,19 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { getProfileById, updateProfile } from '@/lib/profile';
+import { useParams } from 'next/navigation';
+import { getProfileById } from '@/lib/profile';
 import { fetchBooksReadCount, getLevelInfo, type LevelInfo } from '@/lib/levels';
 import { supabaseBrowserClient } from '@/lib/supabaseClient';
 import { BookCard } from '@/components/BookCard';
-import EditProfileForm from '@/components/EditProfileForm';
-
-interface Profile {
-  id: string;
-  name: string;
-  bio: string | null;
-  avatar_url: string | null;
-}
+import type { Profile } from '@/lib/profile';
 
 interface ReadBook {
   id: string;
@@ -24,13 +17,11 @@ interface ReadBook {
 
 export default function ProfilePage() {
   const params = useParams<{ userId: string }>();
-  const router = useRouter();
   const userId = params.userId;
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
 
   const [levelInfo, setLevelInfo] = useState<LevelInfo | null>(null);
   const [progressError, setProgressError] = useState<string | null>(null);
@@ -38,17 +29,6 @@ export default function ProfilePage() {
   const [readBooks, setReadBooks] = useState<ReadBook[]>([]);
   const [readBooksLoading, setReadBooksLoading] = useState(true);
   const [readBooksError, setReadBooksError] = useState<string | null>(null);
-
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  useEffect(() => {
-    supabaseBrowserClient.auth.getUser().then(({ data: { user } }) => {
-      setCurrentUserId(user?.id ?? null);
-    });
-  }, []);
-
-  const isOwnProfile = Boolean(currentUserId && userId && currentUserId === userId);
 
   useEffect(() => {
     getProfileById(userId)
@@ -128,20 +108,21 @@ export default function ProfilePage() {
       .slice(0, 2)
       .join('') ?? '?';
 
-  async function handleLogout() {
-    if (isLoggingOut) return;
-    setIsLoggingOut(true);
-
-    try {
-      await supabaseBrowserClient.auth.signOut();
-    } finally {
-      if (typeof document !== 'undefined') {
-        document.cookie = 'bookclub-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      }
-
-      router.replace('/login');
+  const memberSince = (() => {
+    if (!profile?.created_at) {
+      return null;
     }
-  }
+    const joinedDate = new Date(profile.created_at);
+    if (Number.isNaN(joinedDate.getTime())) {
+      return null;
+    }
+
+    return `Member since ${joinedDate.toLocaleDateString('en-US', {
+      month: 'long',
+      year: 'numeric',
+    })}`;
+  })();
+
   return (
     <div className="space-y-4">
       <header className="flex items-start justify-between gap-4">
@@ -159,42 +140,18 @@ export default function ProfilePage() {
           )}
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{profile?.name ?? 'Member'}</h1>
-            <div className="max-w-[200px]">
-              <p className="text-[10px] text-slate-400">
-                {profile?.bio || 'This member hasn’t written a bio yet.'}
-              </p>
+            <div>
+              {memberSince && <p className="text-sm text-slate-500">{memberSince}</p>}
+              <p className="mt-2 text-slate-400">{profile?.bio}</p>
             </div>
           </div>
         </div>
-        {isOwnProfile && profile && !isEditingProfile && (
-          <button
-            type="button"
-            className="rounded-md border border-slate-700 px-3 py-1 text-[10px] font-medium text-slate-200 hover:bg-slate-800"
-            onClick={() => setIsEditingProfile(true)}
-          >
-            Edit profile
-          </button>
-        )}
       </header>
-
-      {isOwnProfile && isEditingProfile && profile && (
-        <EditProfileForm
-          initialName={profile.name}
-          initialBio={profile.bio}
-          initialAvatarUrl={profile.avatar_url}
-          onCancel={() => setIsEditingProfile(false)}
-          onSave={async ({ name, bio, avatar }) => {
-            const updated = await updateProfile({ userId, name, bio, avatar });
-            setProfile(updated);
-            setIsEditingProfile(false);
-          }}
-        />
-      )}
 
       <section className="space-y-2 rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm">
         {levelInfo && (
-          <p className="text-xs text-slate-400 flex items-center gap-1">
-            <span>Level:</span>
+          <p className="text-lg text-slate-400 flex items-center gap-1">
+            <span>Lvl:</span>
             {levelInfo.level === 'Bookworm' && (
               <span className="inline-flex items-center gap-1">
                 <img src="/icons/bookworm.png" alt="Bookworm" className="h-6 w-6 invert mx-1" />
@@ -242,7 +199,7 @@ export default function ProfilePage() {
                       style={{ width: `${percent}%` }}
                     />
                   </div>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-slate-500">
                     {levelInfo.booksToNextLevel === 1
                       ? '1 book away from leveling up!'
                       : `${levelInfo.booksToNextLevel} books away from leveling up!`}
@@ -261,15 +218,15 @@ export default function ProfilePage() {
         )}
       </section>
 
-      <section className="rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm">
-        <h1 className="mb-2">
+      <section className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+        <h1 className="mb-2 text-lg">
           Books
           {readBooks.length > 0 && !readBooksLoading && <span> ({readBooks.length})</span>}
         </h1>
 
-        {readBooksLoading && <p className="text-xs text-slate-500">Loading reading history…</p>}
+        {readBooksLoading && <p className="text-slate-500">Loading reading history…</p>}
 
-        {readBooksError && <p className="text-xs text-red-400">{readBooksError}</p>}
+        {readBooksError && <p className="text-sm text-red-400">{readBooksError}</p>}
 
         {!readBooksLoading && !readBooksError && readBooks.length === 0 && (
           <p className="text-xs text-slate-500">
@@ -291,16 +248,6 @@ export default function ProfilePage() {
           </div>
         )}
       </section>
-      {isOwnProfile && (
-        <button
-          type="button"
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="rounded-md border border-slate-700 px-3 py-1 text-[10px] font-medium text-slate-200 hover:bg-slate-800"
-        >
-          {isLoggingOut ? 'Logging out...' : 'Logout'}
-        </button>
-      )}
     </div>
   );
 }
