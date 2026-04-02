@@ -1,13 +1,13 @@
 'use client';
 
-import { useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import ReactCanvasConfetti from 'react-canvas-confetti';
 import type { CreateTypes as CanvasConfettiInstance } from 'canvas-confetti';
 
 export function useConfetti() {
   const confettiRef = useRef<CanvasConfettiInstance | null>(null);
 
-  function fire() {
+  const fire = useCallback(() => {
     if (!confettiRef.current) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
@@ -26,7 +26,7 @@ export function useConfetti() {
     shoot(80, 55, 70, 0.1);
     window.setTimeout(() => shoot(70, 125, 70, 0.9), 180);
     window.setTimeout(() => shoot(90, 90, 90, 0.5), 360);
-  }
+  }, []);
 
   const canvas = (
     <ReactCanvasConfetti

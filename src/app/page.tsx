@@ -1,9 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Label, ListBox, Select } from '@heroui/react';
-import ReactCanvasConfetti from 'react-canvas-confetti';
-import type { CreateTypes as CanvasConfettiInstance } from 'canvas-confetti';
 import {
   fetchCurrentBook,
   type CurrentBookWithMeta,
@@ -12,8 +10,9 @@ import {
 import { getCurrentUser } from '@/lib/profile';
 import { BookSearch, type BookSearchResult } from '@/components/BookSearch';
 import {
-  fetchCurrentBookStatusSummary,
+  fetchReadBookCount,
   updateCurrentBookStatus,
+  fetchCurrentBookStatus,
   type ReadingStatus,
 } from '@/lib/readingStatus';
 import { fetchNominationsWithVotes, type NominationWithMeta } from '@/lib/nominations';
@@ -21,9 +20,10 @@ import Link from 'next/link';
 import { fetchBooksReadCount, getLevelInfo, levelRank, type LevelInfo } from '@/lib/levels';
 import { fetchArchivedBooks, type ArchivedBookWithMeta } from '@/lib/archive';
 import ModalComponent from '@/components/Modal';
+import { useConfetti } from '@/hooks/useConfetti';
 
 export default function DashboardPage() {
-  const confettiRef = useRef<CanvasConfettiInstance | null>(null);
+  const { fire, canvas } = useConfetti();
   const [currentBook, setCurrentBook] = useState<CurrentBookWithMeta | null>(null);
   const [loadingCurrentBook, setLoadingCurrentBook] = useState(true);
   const [currentBookError, setCurrentBookError] = useState<string | null>(null);
@@ -65,8 +65,8 @@ export default function DashboardPage() {
 
         if (book) {
           setCurrentBook(book);
-          const summary = await fetchCurrentBookStatusSummary(data.user.id, book.book_id);
-          setUserStatus(summary.userStatus);
+          const userStatus = await fetchCurrentBookStatus(data.user.id, book.book_id);
+          setUserStatus(userStatus);
         }
       } catch {
         setCurrentBookError('Unable to load current book.');
@@ -99,37 +99,15 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (!isModalOpen || !confettiRef.current) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    const fire = (particleCount: number, angle: number, spread: number, originX: number) => {
-      confettiRef.current?.({
-        particleCount,
-        angle,
-        spread,
-        startVelocity: 42,
-        ticks: 180,
-        gravity: 1,
-        origin: { x: originX, y: 0.35 },
-      });
-    };
-
-    fire(80, 55, 70, 0.1);
-    const t1 = window.setTimeout(() => fire(70, 125, 70, 0.9), 180);
-    const t2 = window.setTimeout(() => fire(90, 90, 90, 0.5), 360);
-
-    return () => {
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
-    };
-  }, [isModalOpen]);
+    if (!isModalOpen) return;
+    fire();
+  }, [isModalOpen, fire]);
 
   async function handleStatusChange(status: ReadingStatus) {
     setUpdatingStatus(true);
     try {
       await updateCurrentBookStatus(currentUserId!, currentBook!.book_id, status);
-      const summary = await fetchCurrentBookStatusSummary(currentUserId!, currentBook!.book_id);
-      const prevCount = levelInfo!.booksRead;
+      const prevCount = await fetchReadBookCount(currentUserId!);
       const read = status === 'read';
       const newBookCount = read ? prevCount + 1 : prevCount - 1;
 
@@ -143,7 +121,7 @@ export default function DashboardPage() {
         setIsModalOpen(true);
       }
 
-      setUserStatus(summary.userStatus);
+      setUserStatus(status);
     } finally {
       setUpdatingStatus(false);
     }
@@ -151,13 +129,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <ReactCanvasConfetti
-        onInit={({ confetti }) => {
-          confettiRef.current = confetti;
-        }}
-        className="pointer-events-none fixed inset-0 z-30 h-full w-full"
-        style={{ width: '100%', height: '100%' }}
-      />
+      {canvas}
       <ModalComponent
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -205,7 +177,7 @@ export default function DashboardPage() {
                     >
                       <Label className="text-sm text-slate-500">Your reading status:</Label>
                       <Select.Trigger className="bg-slate-900">
-                        <Select.Value className="text-slate-200" />
+                        <Select.Value className="text-slate-200 text-xs w-full" />
                         <Select.Indicator />
                       </Select.Trigger>
                       <Select.Popover className="bg-slate-900">
@@ -233,7 +205,7 @@ export default function DashboardPage() {
           <div>
             <button
               type="button"
-              className="rounded-md border border-slate-700 px-3 py-1 font-medium text-slate-400 hover:bg-slate-800"
+              className="rounded-md border border-slate-700 px-3 py-1 font-medium text-slate-400 hover:bg-slate-800 text-xs"
               disabled={!currentUserId}
               onClick={() => {
                 setMode(currentBook ? 'edit' : 'set');
