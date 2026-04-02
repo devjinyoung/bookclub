@@ -41,7 +41,7 @@ export async function fetchCurrentBookStatus(
     .select('status')
     .eq('user_id', userId)
     .eq('book_id', bookId)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data?.status ?? 'not_started';

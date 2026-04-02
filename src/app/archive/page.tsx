@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 import { fetchArchivedBooks, type ArchivedBookWithMeta } from '@/lib/archive';
 import { BookCard } from '@/components/BookCard';
 import { getCurrentUser } from '@/lib/profile';
-import { updateCurrentBookStatus } from '@/lib/readingStatus';
+import { fetchReadBookCount, updateCurrentBookStatus } from '@/lib/readingStatus';
 import { supabaseBrowserClient } from '@/lib/supabaseClient';
 import ModalComponent from '@/components/Modal';
+import { getLevelInfo, LevelInfo, levelRank } from '@/lib/levels';
 
 const MONTH_NAMES = [
   'January',
@@ -32,6 +33,7 @@ export default function ArchivePage() {
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [readBookIds, setReadBookIds] = useState<Set<string>>(new Set());
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [level, setLevel] = useState<LevelInfo | null>(null);
 
   useEffect(() => {
     fetchArchivedBooks()
@@ -77,17 +79,25 @@ export default function ArchivePage() {
   }, [currentUserId, archivedBooks]);
 
   async function handleMarkAsRead(bookId: string) {
-    if (!currentUserId) return;
-
     setUpdatingStatus(true);
     setUpdateError(null);
     try {
-      await updateCurrentBookStatus(currentUserId, bookId, 'read');
+      await updateCurrentBookStatus(currentUserId!, bookId, 'read');
       setReadBookIds((prev) => {
         const next = new Set(prev);
         next.add(bookId);
         return next;
       });
+      const count = await fetchReadBookCount(currentUserId!);
+
+      setLevel(getLevelInfo(count));
+      if (
+        count === levelRank.Scholar ||
+        count === levelRank.Librarian ||
+        count === levelRank.Shakespeare
+      ) {
+        setIsModalOpen(true);
+      }
     } catch {
       setUpdateError('Unable to update reading status.');
     } finally {
@@ -100,7 +110,7 @@ export default function ArchivePage() {
       <ModalComponent
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        level={'Bookworm'}
+        level={level?.level ?? 'Bookworm'}
       />
       <header>
         <p className="mt-1 text-slate-400">A shared history of every book your club has read.</p>

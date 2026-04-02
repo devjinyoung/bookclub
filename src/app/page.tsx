@@ -158,7 +158,7 @@ export default function DashboardPage() {
             {!loadingCurrentBook && !currentBookError && (
               <>
                 <div>
-                  <h1 className="text-xl font-bold text-slate-200">
+                  <h1 className="text-xl font-bold text-slate-200 line-clamp-3 overflow-hidden">
                     {currentBook ? currentBook.title : 'No book selected'}
                   </h1>
                   <p className="text-base text-slate-200">
