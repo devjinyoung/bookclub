@@ -4,11 +4,6 @@ interface BookCardProps {
   coverImageUrl?: string | null;
   subtitle?: string | null;
   /**
-   * Optional call-to-action label rendered in the footer area
-   * (e.g. "Select", "View details").
-   */
-  ctaLabel?: string;
-  /**
    * Optional click handler for making the whole card interactive.
    */
   onClick?: () => void;
@@ -20,7 +15,6 @@ interface BookCardProps {
   onActionButtonClick?: () => void;
   actionButtonDisabled?: boolean;
   actionButtonLoading?: boolean;
-  actionButtonLoadingText?: string;
   /**
    * Optional extra classes to customize layout when reusing the card.
    */
@@ -32,18 +26,14 @@ export function BookCard({
   author,
   coverImageUrl,
   subtitle,
-  ctaLabel,
   onClick,
   actionButtonLabel,
   onActionButtonClick,
   actionButtonDisabled,
   actionButtonLoading,
-  actionButtonLoadingText,
   className,
 }: BookCardProps) {
-  const actionText = actionButtonLoading
-    ? (actionButtonLoadingText ?? 'Please wait…')
-    : actionButtonLabel;
+  const actionText = actionButtonLoading ? 'Please wait...' : actionButtonLabel;
 
   return (
     <div
@@ -66,14 +56,6 @@ export function BookCard({
         {author && <p className="line-clamp-1 text-slate-500">{author}</p>}
 
         {subtitle && <p className="line-clamp-2  text-slate-500">{subtitle}</p>}
-
-        {ctaLabel && (
-          <div className="mt-1">
-            <span className="inline-flex items-center rounded-full bg-sky-500/10 px-2 py-0.5 text-sm text-sky-300 group-hover:bg-sky-500/20">
-              {ctaLabel}
-            </span>
-          </div>
-        )}
 
         {actionButtonLabel && (
           <div className="mt-auto">

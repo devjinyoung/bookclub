@@ -7,6 +7,7 @@ import { fetchBooksReadCount, getLevelInfo, type LevelInfo } from '@/lib/levels'
 import { supabaseBrowserClient } from '@/lib/supabaseClient';
 import { BookCard } from '@/components/BookCard';
 import type { Profile } from '@/lib/profile';
+import { updateCurrentBookStatus } from '@/lib/readingStatus';
 
 interface ReadBook {
   id: string;
@@ -29,6 +30,8 @@ export default function ProfilePage() {
   const [readBooks, setReadBooks] = useState<ReadBook[]>([]);
   const [readBooksLoading, setReadBooksLoading] = useState(true);
   const [readBooksError, setReadBooksError] = useState<string | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   useEffect(() => {
     getProfileById(userId)
@@ -57,6 +60,7 @@ export default function ProfilePage() {
   }, [userId]);
 
   useEffect(() => {
+    //TODO: move to different file.
     async function loadReadBooks() {
       try {
         const { data, error } = await supabaseBrowserClient
@@ -122,6 +126,19 @@ export default function ProfilePage() {
       year: 'numeric',
     })}`;
   })();
+
+  async function handleMarkAsRead(bookId: string) {
+    setUpdatingStatus(true);
+    setUpdateError(null);
+    try {
+      await updateCurrentBookStatus(profile!.id!, bookId, 'reading');
+      setReadBooks((prev) => prev.filter((book) => book.id !== bookId));
+    } catch {
+      setUpdateError('Unable to update reading status.');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -233,6 +250,11 @@ export default function ProfilePage() {
             When this member marks club books as read, they&apos;ll appear here.
           </p>
         )}
+        {updateError && (
+          <div className="rounded-xl border border-red-900 bg-red-950/40 p-4 text-xs text-red-300">
+            {updateError}
+          </div>
+        )}
 
         {!readBooksLoading && !readBooksError && readBooks.length > 0 && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -242,6 +264,10 @@ export default function ProfilePage() {
                 title={book.title}
                 author={book.author}
                 coverImageUrl={book.coverImageUrl}
+                actionButtonLabel="Mark as unread"
+                onActionButtonClick={() => handleMarkAsRead(book.id)}
+                actionButtonDisabled={updatingStatus}
+                actionButtonLoading={updatingStatus}
                 className="bg-slate-950/60"
               />
             ))}

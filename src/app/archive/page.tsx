@@ -151,7 +151,6 @@ export default function ArchivePage() {
                 subtitle={`${MONTH_NAMES[entry.month - 1]} ${entry.year}`}
                 className="h-full"
                 actionButtonLabel={readBookIds.has(entry.book.id) ? undefined : 'Mark as read'}
-                actionButtonLoadingText="Marking…"
                 actionButtonDisabled={!currentUserId || updatingStatus}
                 actionButtonLoading={updatingStatus}
                 onActionButtonClick={() => handleMarkAsRead(entry.book.id)}
