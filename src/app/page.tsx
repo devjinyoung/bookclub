@@ -10,7 +10,6 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { BookSearch, type BookSearchResult } from '@/components/BookSearch';
 import {
-  fetchReadBookCount,
   updateCurrentBookStatus,
   fetchCurrentBookStatus,
   type ReadingStatus,
@@ -105,10 +104,9 @@ export default function DashboardPage() {
   async function handleStatusChange(status: ReadingStatus) {
     setUpdatingStatus(true);
     try {
-      const prevCount = await fetchReadBookCount(currentUserId!);
       await updateCurrentBookStatus(currentUserId!, currentBook!.book_id, status);
       const read = status === 'read';
-      const newBookCount = read ? prevCount + 1 : prevCount - 1;
+      const newBookCount = read ? levelInfo!.booksRead + 1 : levelInfo!.booksRead - 1;
 
       setLevelInfo(getLevelInfo(newBookCount));
       if (
@@ -217,6 +215,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </section>
+      <ProgressSection levelInfo={levelInfo} progressError={progressError} />
 
       {/* Top Nominations */}
       <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
@@ -274,8 +273,6 @@ export default function DashboardPage() {
           </ul>
         )}
       </section>
-
-      <ProgressSection levelInfo={levelInfo} progressError={progressError} />
 
       {/* Recent Archive */}
       <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">

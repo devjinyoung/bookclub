@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import { fetchArchivedBooks, type ArchivedBookWithMeta } from '@/lib/archive';
 import { BookCard } from '@/components/BookCard';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchReadBookCount, updateCurrentBookStatus } from '@/lib/readingStatus';
+import { updateCurrentBookStatus } from '@/lib/readingStatus';
 import { supabaseBrowserClient } from '@/lib/supabaseClient';
 import ModalComponent from '@/components/Modal';
-import { getLevelInfo, LevelInfo, levelRank } from '@/lib/levels';
+import { getLevelInfo, LevelInfo, levelRank, fetchBooksReadCount } from '@/lib/levels';
 
 const MONTH_NAMES = [
   'January',
@@ -78,7 +78,7 @@ export default function ArchivePage() {
         next.add(bookId);
         return next;
       });
-      const count = await fetchReadBookCount(currentUserId!);
+      const count = await fetchBooksReadCount(currentUserId!);
 
       setLevel(getLevelInfo(count));
       if (

@@ -21,17 +21,6 @@ export async function updateCurrentBookStatus(
   if (error) throw error;
 }
 
-export async function fetchReadBookCount(userId: string): Promise<number> {
-  const { data, error } = await supabaseBrowserClient
-    .from('reading_statuses')
-    .select('id, book_id')
-    .eq('user_id', userId)
-    .eq('status', 'read');
-
-  if (error) throw error;
-  return data?.length ?? 0;
-}
-
 export async function fetchCurrentBookStatus(
   userId: string,
   bookId: string,
