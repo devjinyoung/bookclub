@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { getCurrentUser } from '@/lib/profile';
-import { supabaseBrowserClient } from '@/lib/supabaseClient';
+import { useAuth } from '@/contexts/AuthContext';
 
 const PUBLIC_ROUTES = ['/login', '/signup'];
 
@@ -14,6 +13,7 @@ type AuthGuardProps = {
 export function AuthGuard({ children }: AuthGuardProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { user, isLoading } = useAuth();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   const isPublicRoute = useMemo(() => {
@@ -21,45 +21,22 @@ export function AuthGuard({ children }: AuthGuardProps) {
   }, [pathname]);
 
   useEffect(() => {
-    let isActive = true;
-
-    async function checkAuth() {
-      if (isPublicRoute) {
-        if (isActive) setIsCheckingAuth(false);
-        return;
-      }
-
-      const { data } = await getCurrentUser();
-      if (!isActive) return;
-
-      if (!data.user) {
-        router.replace('/login');
-        return;
-      }
-
+    if (isPublicRoute) {
       setIsCheckingAuth(false);
+      return;
     }
 
-    setIsCheckingAuth(true);
-    checkAuth();
+    if (isLoading) return;
 
-    const {
-      data: { subscription },
-    } = supabaseBrowserClient.auth.onAuthStateChange((_event, session) => {
-      if (isPublicRoute) return;
+    if (!user) {
+      router.replace('/login');
+      return;
+    }
 
-      if (!session?.user) {
-        router.replace('/login');
-      }
-    });
+    setIsCheckingAuth(false);
+  }, [isPublicRoute, isLoading, user, router]);
 
-    return () => {
-      isActive = false;
-      subscription.unsubscribe();
-    };
-  }, [isPublicRoute, router]);
-
-  if (isCheckingAuth && !isPublicRoute) {
+  if ((isCheckingAuth || isLoading) && !isPublicRoute) {
     return null;
   }
 

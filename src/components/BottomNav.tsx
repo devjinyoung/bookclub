@@ -1,10 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState, type ReactNode } from 'react';
-import { getCurrentUser } from '@/lib/profile';
-import { supabaseBrowserClient } from '@/lib/supabaseClient';
+import { usePathname } from 'next/navigation';
+import type { ReactNode } from 'react';
 
 type Tab = {
   href: string;
@@ -21,33 +19,9 @@ const tabs: Tab[] = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const router = useRouter();
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const hiddenRoutes = ['/login', '/signup'];
   const shouldHideNav = hiddenRoutes.includes(pathname);
-
-  useEffect(() => {
-    getCurrentUser().then(({ data }) => {
-      if (data.user) {
-        setCurrentUserId(data.user.id);
-      } else {
-        setCurrentUserId(null);
-      }
-    });
-
-    const {
-      data: { subscription },
-    } = supabaseBrowserClient.auth.onAuthStateChange((_event, session) => {
-      setCurrentUserId(session?.user?.id ?? null);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  const isProfileActive = pathname.startsWith('/profile');
 
   if (shouldHideNav) {
     return null;

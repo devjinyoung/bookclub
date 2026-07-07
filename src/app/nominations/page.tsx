@@ -11,16 +11,16 @@ import {
   toggleVote,
   type NominationWithMeta,
 } from '@/lib/nominations';
-import { getCurrentUser } from '@/lib/profile';
+import { useAuth } from '@/contexts/AuthContext';
 
 // TODO (P4.2.c): Add Supabase Realtime subscriptions on `nominations` and
 // `votes` to keep vote counts and list ordering in sync across clients.
 
 export default function NominationsPage() {
+  const { currentUserId, isLoading: isAuthLoading } = useAuth();
   const [nominations, setNominations] = useState<NominationWithMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [votedIds, setVotedIds] = useState<Set<string>>(new Set());
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [isNominateOpen, setIsNominateOpen] = useState(false);
@@ -31,16 +31,14 @@ export default function NominationsPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
+    if (isAuthLoading) return;
+
     async function load() {
       try {
-        const [{ data }, nominationsData] = await Promise.all([
-          getCurrentUser(),
-          fetchNominationsWithVotes(),
-        ]);
+        const nominationsData = await fetchNominationsWithVotes();
 
-        if (data.user) {
-          setCurrentUserId(data.user.id);
-          const userVoteIds = await fetchUserVoteNominationIds(data.user.id);
+        if (currentUserId) {
+          const userVoteIds = await fetchUserVoteNominationIds(currentUserId);
           setVotedIds(new Set(userVoteIds));
         }
 
@@ -53,7 +51,7 @@ export default function NominationsPage() {
     }
 
     load();
-  }, []);
+  }, [isAuthLoading, currentUserId]);
 
   async function handleToggleVote(nomination: NominationWithMeta) {
     const hasVoted = votedIds.has(nomination.id);

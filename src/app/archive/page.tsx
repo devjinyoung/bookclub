@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { fetchArchivedBooks, type ArchivedBookWithMeta } from '@/lib/archive';
 import { BookCard } from '@/components/BookCard';
-import { getCurrentUser } from '@/lib/profile';
+import { useAuth } from '@/contexts/AuthContext';
 import { fetchReadBookCount, updateCurrentBookStatus } from '@/lib/readingStatus';
 import { supabaseBrowserClient } from '@/lib/supabaseClient';
 import ModalComponent from '@/components/Modal';
@@ -28,7 +28,7 @@ export default function ArchivePage() {
   const [archivedBooks, setArchivedBooks] = useState<ArchivedBookWithMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const { currentUserId } = useAuth();
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [readBookIds, setReadBookIds] = useState<Set<string>>(new Set());
@@ -45,16 +45,6 @@ export default function ArchivePage() {
       })
       .finally(() => {
         setLoading(false);
-      });
-  }, []);
-
-  useEffect(() => {
-    getCurrentUser()
-      .then(({ data }) => {
-        setCurrentUserId(data.user?.id ?? null);
-      })
-      .catch(() => {
-        setCurrentUserId(null);
       });
   }, []);
 
@@ -92,7 +82,7 @@ export default function ArchivePage() {
 
       setLevel(getLevelInfo(count));
       if (
-        count === levelRank.Scholar ||
+        count === levelRank.Bookworm ||
         count === levelRank.Librarian ||
         count === levelRank.Shakespeare
       ) {

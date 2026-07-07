@@ -1,14 +1,25 @@
 import { supabaseBrowserClient } from './supabaseClient';
 
-export type Level = 'Bookworm' | 'Scholar' | 'Librarian' | 'Shakespeare';
+export type Level = 'Grasshopper' | 'Bookworm' | 'Librarian' | 'Shakespeare';
 
 // Number of books required to reach the level.
 export const levelRank: Record<Level, number> = {
-  Bookworm: 0,
-  Scholar: 2,
-  Librarian: 4,
-  Shakespeare: 10,
+  Grasshopper: 0,
+  Bookworm: 4,
+  Librarian: 7,
+  Shakespeare: 15,
 };
+
+const levelOrder: Level[] = ['Grasshopper', 'Bookworm', 'Librarian', 'Shakespeare'];
+
+export function getLevelBand(level: Level): { bandStart: number; bandEnd: number } | null {
+  const index = levelOrder.indexOf(level);
+  if (index === -1 || index === levelOrder.length - 1) return null;
+  return {
+    bandStart: levelRank[level],
+    bandEnd: levelRank[levelOrder[index + 1]],
+  };
+}
 
 export interface LevelInfo {
   level: Level;
@@ -21,12 +32,12 @@ export function getLevelInfo(booksRead: number): LevelInfo {
     return { level: 'Shakespeare', booksRead, booksToNextLevel: null };
   }
   if (booksRead >= levelRank.Librarian) {
-    return { level: 'Librarian', booksRead, booksToNextLevel: 10 - booksRead };
+    return { level: 'Librarian', booksRead, booksToNextLevel: levelRank.Shakespeare - booksRead };
   }
-  if (booksRead >= levelRank.Scholar) {
-    return { level: 'Scholar', booksRead, booksToNextLevel: 4 - booksRead };
+  if (booksRead >= levelRank.Bookworm) {
+    return { level: 'Bookworm', booksRead, booksToNextLevel: levelRank.Librarian - booksRead };
   }
-  return { level: 'Bookworm', booksRead, booksToNextLevel: 2 - booksRead };
+  return { level: 'Grasshopper', booksRead, booksToNextLevel: levelRank.Bookworm - booksRead };
 }
 
 export async function fetchBooksReadCount(userId: string): Promise<number> {

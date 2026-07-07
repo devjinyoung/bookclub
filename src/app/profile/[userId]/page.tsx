@@ -6,6 +6,7 @@ import { getProfileById } from '@/lib/profile';
 import { fetchBooksReadCount, getLevelInfo, type LevelInfo } from '@/lib/levels';
 import { supabaseBrowserClient } from '@/lib/supabaseClient';
 import { BookCard } from '@/components/BookCard';
+import { ProgressSection } from '@/components/ProgressSection';
 import type { Profile } from '@/lib/profile';
 import { updateCurrentBookStatus } from '@/lib/readingStatus';
 
@@ -165,75 +166,11 @@ export default function ProfilePage() {
         </div>
       </header>
 
-      <section className="space-y-2 rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm">
-        {levelInfo && (
-          <p className="text-lg text-slate-400 flex items-center gap-1">
-            <span>Lvl:</span>
-            {levelInfo.level === 'Bookworm' && (
-              <span className="inline-flex items-center gap-1">
-                <img src="/icons/bookworm.png" alt="Bookworm" className="h-6 w-6 invert mx-1" />
-                <span>Bookworm</span>
-              </span>
-            )}{' '}
-            {levelInfo.level === 'Scholar' && (
-              <span className="inline-flex items-center gap-1">
-                <img src="/icons/Scholar.png" alt="Scholar" className="h-6 w-6 invert mx-1" />
-                <span>Scholar</span>
-              </span>
-            )}
-            {levelInfo.level === 'Librarian' && (
-              <span className="inline-flex items-center gap-1">
-                <img src="/icons/heart.png" alt="Librarian" className="h-6 w-6 invert mx-1" />
-                <span>Librarian</span>
-              </span>
-            )}
-            {levelInfo.level === 'Shakespeare' && '✍️ Shakespeare'}
-          </p>
-        )}
-        {progressError && <p className="text-xs text-red-400">{progressError}</p>}
-        {levelInfo && levelInfo.booksToNextLevel !== null ? (
-          <>
-            <p></p>
-            {(() => {
-              let bandStart = 0;
-              let bandEnd = 2;
-              if (levelInfo.level === 'Scholar') {
-                bandStart = 2;
-                bandEnd = 4;
-              } else if (levelInfo.level === 'Librarian') {
-                bandStart = 4;
-                bandEnd = 10;
-              }
-              const clampedBooks = Math.min(Math.max(levelInfo.booksRead, bandStart), bandEnd);
-              const progress =
-                bandEnd > bandStart ? (clampedBooks - bandStart) / (bandEnd - bandStart) : 0;
-              const percent = Math.round(progress * 100);
-              return (
-                <div className="space-y-1">
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
-                    <div
-                      className="h-full rounded-full bg-sky-500 transition-[width]"
-                      style={{ width: `${percent}%` }}
-                    />
-                  </div>
-                  <p className="text-slate-500">
-                    {levelInfo.booksToNextLevel === 1
-                      ? '1 book away from leveling up!'
-                      : `${levelInfo.booksToNextLevel} books away from leveling up!`}
-                  </p>
-                </div>
-              );
-            })()}
-          </>
-        ) : (
-          <p>You&apos;ve reached the highest level!</p>
-        )}
-        {!progressError && !levelInfo && (
-          <p className="text-xs text-slate-500">
-            This member&apos;s level and books read will appear here once they start logging reads.
-          </p>
-        )}
-      </section>
+      <ProgressSection
+        levelInfo={levelInfo}
+        progressError={progressError}
+        emptyMessage="This member's level and books read will appear here once they start logging reads."
+      />
 
       <section className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
         <h1 className="mb-2 text-lg">

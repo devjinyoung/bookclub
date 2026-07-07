@@ -7,7 +7,7 @@ import {
   type CurrentBookWithMeta,
   updateCurrentBookFromSearchPayload,
 } from '@/lib/currentBook';
-import { getCurrentUser } from '@/lib/profile';
+import { useAuth } from '@/contexts/AuthContext';
 import { BookSearch, type BookSearchResult } from '@/components/BookSearch';
 import {
   fetchReadBookCount,
@@ -20,14 +20,15 @@ import Link from 'next/link';
 import { fetchBooksReadCount, getLevelInfo, levelRank, type LevelInfo } from '@/lib/levels';
 import { fetchArchivedBooks, type ArchivedBookWithMeta } from '@/lib/archive';
 import ModalComponent from '@/components/Modal';
+import { ProgressSection } from '@/components/ProgressSection';
 import { useConfetti } from '@/hooks/useConfetti';
 
 export default function DashboardPage() {
   const { fire, canvas } = useConfetti();
+  const { currentUserId, isLoading: isAuthLoading } = useAuth();
   const [currentBook, setCurrentBook] = useState<CurrentBookWithMeta | null>(null);
   const [loadingCurrentBook, setLoadingCurrentBook] = useState(true);
   const [currentBookError, setCurrentBookError] = useState<string | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const [userStatus, setUserStatus] = useState<ReadingStatus | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
@@ -48,24 +49,22 @@ export default function DashboardPage() {
   const [recentArchived, setRecentArchived] = useState<ArchivedBookWithMeta[]>([]);
   const [archiveError, setArchiveError] = useState<string | null>(null);
 
-  const [showProgressInfo, setShowProgressInfo] = useState(false);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
+    if (isAuthLoading) return;
+
     async function load() {
       try {
-        const [{ data }, book] = await Promise.all([getCurrentUser(), fetchCurrentBook()]);
+        if (!currentUserId) return;
 
-        //TODO: clean up. user should always exist.
-        if (!data.user) return;
-        setCurrentUserId(data.user.id);
-        const count = await fetchBooksReadCount(data.user.id);
+        const book = await fetchCurrentBook();
+        const count = await fetchBooksReadCount(currentUserId);
         setLevelInfo(getLevelInfo(count));
 
         if (book) {
           setCurrentBook(book);
-          const userStatus = await fetchCurrentBookStatus(data.user.id, book.book_id);
+          const userStatus = await fetchCurrentBookStatus(currentUserId, book.book_id);
           setUserStatus(userStatus);
         }
       } catch {
@@ -76,7 +75,7 @@ export default function DashboardPage() {
     }
 
     load();
-  }, []);
+  }, [isAuthLoading, currentUserId]);
 
   useEffect(() => {
     fetchNominationsWithVotes()
@@ -114,7 +113,7 @@ export default function DashboardPage() {
       setLevelInfo(getLevelInfo(newBookCount));
       if (
         read &&
-        (newBookCount === levelRank.Scholar ||
+        (newBookCount === levelRank.Bookworm ||
           newBookCount === levelRank.Librarian ||
           newBookCount === levelRank.Shakespeare)
       ) {
@@ -276,99 +275,7 @@ export default function DashboardPage() {
         )}
       </section>
 
-      {/* Your Progress */}
-      <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-        <div className="relative flex items-center">
-          <h2 className="font-semibold text-slate-200">Your Progress</h2>
-          <button
-            type="button"
-            onClick={() => setShowProgressInfo((v) => !v)}
-            onMouseEnter={() => setShowProgressInfo(true)}
-            onMouseLeave={() => setShowProgressInfo(false)}
-            className="flex shrink-0 rounded-full text-slate-400 hover:text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 pl-1"
-            aria-label="Progress info"
-          >
-            <img src="/icons/info.png" alt="" className="h-3 w-3 invert" />
-          </button>
-          {showProgressInfo && (
-            <div className="absolute left-0 top-full z-10 mt-1.5 max-w-[280px] rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-300 shadow-lg">
-              Track how many books you&apos;ve read with the club. Complete books to level up from
-              Bookworm to Shakespeare!
-            </div>
-          )}
-        </div>
-        {progressError && <p className="text-xs text-red-400">{progressError}</p>}
-        {!progressError && levelInfo && (
-          <div className="space-y-2 text-slate-300">
-            <p className="flex items-center gap-1">
-              <span>Lvl:</span>
-              <span className="inline-flex items-center gap-1 font-semibold">
-                {levelInfo.level === 'Bookworm' && (
-                  <>
-                    <img src="/icons/bookworm.png" alt="Bookworm" className="h-6 w-6 invert mx-1" />
-                    <span>Bookworm</span>
-                  </>
-                )}
-                {levelInfo.level === 'Scholar' && (
-                  <>
-                    <img src="/icons/Scholar.png" alt="Scholar" className="h-6 w-6 invert mx-1" />
-                    <span>Scholar</span>
-                  </>
-                )}
-                {levelInfo.level === 'Librarian' && (
-                  <span className="inline-flex items-center gap-1">
-                    <img src="/icons/heart.png" alt="Librarian" className="h-6 w-6 invert mx-1" />
-                    <span>Librarian</span>
-                  </span>
-                )}{' '}
-                {levelInfo.level === 'Shakespeare' && '✍️ Shakespeare'}
-              </span>
-            </p>
-            {levelInfo.booksToNextLevel !== null ? (
-              <>
-                {(() => {
-                  // Compute visual progress within the current level band.
-                  let bandStart = 0;
-                  let bandEnd = 2;
-                  if (levelInfo.level === 'Scholar') {
-                    bandStart = 2;
-                    bandEnd = 4;
-                  } else if (levelInfo.level === 'Librarian') {
-                    bandStart = 4;
-                    bandEnd = 10;
-                  }
-                  const clampedBooks = Math.min(Math.max(levelInfo.booksRead, bandStart), bandEnd);
-                  const progress =
-                    bandEnd > bandStart ? (clampedBooks - bandStart) / (bandEnd - bandStart) : 0;
-                  const percent = Math.round(progress * 100);
-                  return (
-                    <div className="space-y-1">
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
-                        <div
-                          className="h-full rounded-full bg-sky-500 transition-[width]"
-                          style={{ width: `${percent}%` }}
-                        />
-                      </div>
-                      <p className="text-sm text-slate-500">
-                        {levelInfo.booksToNextLevel === 1
-                          ? '1 book away from leveling up!'
-                          : `${levelInfo.booksToNextLevel} books away from leveling up!`}
-                      </p>
-                    </div>
-                  );
-                })()}
-              </>
-            ) : (
-              <p>You&apos;ve reached the highest level!</p>
-            )}
-          </div>
-        )}
-        {!progressError && !levelInfo && (
-          <p className="text-xs text-slate-500">
-            Your current level and books read will appear here once you start logging reads.
-          </p>
-        )}
-      </section>
+      <ProgressSection levelInfo={levelInfo} progressError={progressError} />
 
       {/* Recent Archive */}
       <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
