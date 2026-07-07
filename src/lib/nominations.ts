@@ -176,24 +176,26 @@ export async function createNominationFromSearchPayload(
     throw error;
   }
 
+  const row = data as any;
+
   return {
-    id: data.id as string,
-    pitch: data.pitch as string,
-    created_at: data.created_at as string,
-    updated_at: data.updated_at as string,
+    id: row.id as string,
+    pitch: row.pitch as string,
+    created_at: row.created_at as string,
+    updated_at: row.updated_at as string,
     book: {
-      id: data.book.id as string,
-      title: data.book.title as string,
-      author: data.book.author as string,
-      cover_image_url: (data.book.cover_image_url as string | null | undefined) ?? null,
+      id: row.book.id as string,
+      title: row.book.title as string,
+      author: row.book.author as string,
+      cover_image_url: (row.book.cover_image_url as string | null | undefined) ?? null,
     },
-    nominator: data.nominator
+    nominator: row.nominator
       ? ({
-          id: data.nominator.id as string,
-          name: data.nominator.name as string,
+          id: row.nominator.id as string,
+          name: row.nominator.name as string,
         } as const)
       : null,
-    vote_count: Array.isArray(data.votes) ? data.votes.length : 0,
+    vote_count: Array.isArray(row.votes) ? row.votes.length : 0,
   };
 }
 
