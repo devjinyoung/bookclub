@@ -73,29 +73,14 @@ export function ProgressSection({
           <p className="flex items-center gap-1">
             <span>Lvl:</span>
             <span className="inline-flex items-center gap-1 font-semibold">
-              {levelInfo.level === 'Grasshopper' && (
-                <>
-                  <img
-                    src="/icons/bookworm.png"
-                    alt="Grasshopper"
-                    className="mx-1 h-6 w-6 invert"
-                  />
-                  <span>Grasshopper</span>
-                </>
-              )}
-              {levelInfo.level === 'Bookworm' && (
-                <>
-                  <img src="/icons/Scholar.png" alt="Bookworm" className="mx-1 h-6 w-6 invert" />
-                  <span>Bookworm</span>
-                </>
-              )}
-              {levelInfo.level === 'Librarian' && (
-                <span className="inline-flex items-center gap-1">
-                  <img src="/icons/heart.png" alt="Librarian" className="mx-1 h-6 w-6 invert" />
-                  <span>Librarian</span>
-                </span>
-              )}{' '}
-              {levelInfo.level === 'Shakespeare' && '✍️ Shakespeare'}
+              <>
+                <img
+                  src={`/icons/${levelInfo.level}.png`}
+                  alt={levelInfo.level}
+                  className="mx-1 h-6 w-6 invert"
+                />
+                <span>{levelInfo.level}</span>
+              </>
             </span>
           </p>
           {levelInfo.booksToNextLevel !== null ? (

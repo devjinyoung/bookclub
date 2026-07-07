@@ -105,8 +105,8 @@ export default function DashboardPage() {
   async function handleStatusChange(status: ReadingStatus) {
     setUpdatingStatus(true);
     try {
-      await updateCurrentBookStatus(currentUserId!, currentBook!.book_id, status);
       const prevCount = await fetchReadBookCount(currentUserId!);
+      await updateCurrentBookStatus(currentUserId!, currentBook!.book_id, status);
       const read = status === 'read';
       const newBookCount = read ? prevCount + 1 : prevCount - 1;
 
