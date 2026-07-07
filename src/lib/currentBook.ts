@@ -33,15 +33,16 @@ export async function fetchCurrentBook(): Promise<CurrentBookWithMeta | null> {
     throw error;
   }
 
-  if (!data.book) {
+  const book = (data as any).book;
+  if (!book) {
     return null;
   }
 
   return {
-    book_id: data.book.id as string,
-    title: data.book.title as string,
-    author: data.book.author as string,
-    cover_image_url: (data.book.cover_image_url as string | null | undefined) ?? null,
+    book_id: book.id as string,
+    title: book.title as string,
+    author: book.author as string,
+    cover_image_url: (book.cover_image_url as string | null | undefined) ?? null,
   };
 }
 
