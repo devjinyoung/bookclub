@@ -246,9 +246,7 @@ export default function ProfilePage() {
         {readBooksError && <p className="text-sm text-red-400">{readBooksError}</p>}
 
         {!readBooksLoading && !readBooksError && readBooks.length === 0 && (
-          <p className="text-xs text-slate-500">
-            When this member marks club books as read, they&apos;ll appear here.
-          </p>
+          <p className="text-xs text-slate-500">No books read yet.</p>
         )}
         {updateError && (
           <div className="rounded-xl border border-red-900 bg-red-950/40 p-4 text-xs text-red-300">

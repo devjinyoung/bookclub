@@ -51,7 +51,7 @@ export function BookCard({
       </div>
 
       <div className="flex flex-1 flex-col gap-1 mt-2">
-        <p className="line-clamp-2 text-slate-200 text-lg">{title}</p>
+        <p className="line-clamp-2 h-14 text-slate-200 text-lg leading-7">{title}</p>
 
         {author && <p className="line-clamp-1 text-slate-500">{author}</p>}
 
@@ -66,7 +66,7 @@ export function BookCard({
                 e.stopPropagation();
                 onActionButtonClick?.();
               }}
-              className=" font-medium text-sky-400 hover:text-sky-300 disabled:cursor-not-allowed disabled:opacity-50"
+              className="text-sm text-sky-400 hover:text-sky-300 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={actionButtonDisabled}
             >
               {actionText}
