@@ -133,7 +133,7 @@ export function AppHeader() {
             </DropdownTrigger>
             <DropdownPopover
               placement="bottom end"
-              className="bg-slate-900 text-base text-slate-300"
+              className="bg-slate-900 text-base text-slate-300 min-w-[160px]"
             >
               <DropdownMenu aria-label="User menu" onAction={onDropdownAction}>
                 <DropdownItem id="view-profile" isDisabled={!ownProfileHref}>
