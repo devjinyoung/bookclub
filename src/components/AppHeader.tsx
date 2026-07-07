@@ -13,8 +13,9 @@ import {
   Separator,
 } from '@heroui/react';
 import EditProfileForm from '@/components/EditProfileForm';
-import { getProfileById, type Profile, updateProfile } from '@/lib/profile';
+import { updateProfile } from '@/lib/profile';
 import { supabaseBrowserClient } from '@/lib/supabaseClient';
+import { useProfile } from '@/contexts/ProfileContext';
 
 function BackIcon() {
   return (
@@ -62,18 +63,8 @@ export function AppHeader() {
   const pathname = usePathname();
   const label = getScreenLabel(pathname);
   const hideBackButton = pathname === '/login' || pathname === '/signup';
-  const [profile, setProfile] = useState<Profile | null>(null);
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
-
-  useEffect(() => {
-    supabaseBrowserClient.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        getProfileById(user.id).then((data) => {
-          setProfile(data);
-        });
-      }
-    });
-  }, []);
+  const { profile, setProfile, isLoading } = useProfile();
 
   const avatarName = profile?.name ?? 'User';
   const avatarInitials = getInitials(avatarName);
@@ -124,12 +115,14 @@ export function AppHeader() {
         ) : (
           <Dropdown>
             <DropdownTrigger>
-              <Avatar size="md" className="my-3">
-                {profile?.avatar_url ? (
-                  <Avatar.Image src={profile.avatar_url} alt={`${avatarName} avatar`} />
-                ) : null}
-                <Avatar.Fallback>{avatarInitials}</Avatar.Fallback>
-              </Avatar>
+              {profile && (
+                <Avatar size="md" className="my-3">
+                  {profile?.avatar_url ? (
+                    <Avatar.Image src={profile.avatar_url} alt={`${avatarName} avatar`} />
+                  ) : null}
+                  <Avatar.Fallback>{avatarInitials}</Avatar.Fallback>
+                </Avatar>
+              )}
             </DropdownTrigger>
             <DropdownPopover
               placement="bottom end"
@@ -151,7 +144,7 @@ export function AppHeader() {
           </Dropdown>
         )}
       </div>
-      {profile && (
+      {!isLoading && (
         <Modal>
           <Modal.Backdrop isOpen={isEditProfileModalOpen} onOpenChange={setIsEditProfileModalOpen}>
             <Modal.Container placement="center">
@@ -161,20 +154,19 @@ export function AppHeader() {
                 </Modal.Header>
                 <Modal.Body>
                   <EditProfileForm
-                    initialName={profile.name}
-                    initialBio={profile.bio}
-                    initialAvatarUrl={profile.avatar_url}
+                    initialName={profile!.name}
+                    initialBio={profile!.bio}
+                    initialAvatarUrl={profile!.avatar_url}
                     onCancel={() => setIsEditProfileModalOpen(false)}
                     onSave={async ({ name, bio, avatar }) => {
                       const updated = await updateProfile({
-                        userId: profile.id,
+                        userId: profile!.id,
                         name,
                         bio,
                         avatar,
                       });
                       setProfile(updated);
                       setIsEditProfileModalOpen(false);
-                      router.push('/');
                     }}
                   />
                 </Modal.Body>

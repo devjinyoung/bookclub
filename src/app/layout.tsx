@@ -5,6 +5,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { BottomNav } from '@/components/BottomNav';
 import { AuthGuard } from '@/components/AuthGuard';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { ProfileProvider } from '@/contexts/ProfileContext';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -33,11 +34,13 @@ export default function RootLayout({
       >
         <div className="min-h-dvh flex flex-col items-center">
           <AuthProvider>
-            <AuthGuard>
-              <AppHeader />
-              <main className="w-full max-w-md flex-1 px-4 py-4 pb-20">{children}</main>
-              <BottomNav />
-            </AuthGuard>
+            <ProfileProvider>
+              <AuthGuard>
+                <AppHeader />
+                <main className="w-full max-w-md flex-1 px-4 py-4 pb-20">{children}</main>
+                <BottomNav />
+              </AuthGuard>
+            </ProfileProvider>
           </AuthProvider>
         </div>
       </body>
