@@ -76,7 +76,7 @@ export function ProgressSection({
             <span className="inline-flex items-center gap-1 font-semibold">
               <>
                 <img
-                  src={`/icons/${levelInfo.level}.png`}
+                  src={`/icons/${levelInfo.level.toLowerCase()}.png`}
                   alt={levelInfo.level}
                   className="mx-1 h-6 w-6 invert"
                 />
