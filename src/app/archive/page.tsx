@@ -8,6 +8,7 @@ import { updateCurrentBookStatus } from '@/lib/readingStatus';
 import { supabaseBrowserClient } from '@/lib/supabaseClient';
 import ModalComponent from '@/components/Modal';
 import { getLevelInfo, LevelInfo, levelRank, fetchBooksReadCount } from '@/lib/levels';
+import { useProfile } from '@/contexts/ProfileContext';
 
 const MONTH_NAMES = [
   'January',
@@ -33,7 +34,7 @@ export default function ArchivePage() {
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [readBookIds, setReadBookIds] = useState<Set<string>>(new Set());
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [level, setLevel] = useState<LevelInfo | null>(null);
+  const { booksRead, setBooksRead } = useProfile();
 
   useEffect(() => {
     fetchArchivedBooks()
@@ -78,9 +79,8 @@ export default function ArchivePage() {
         next.add(bookId);
         return next;
       });
-      const count = await fetchBooksReadCount(currentUserId!);
-
-      setLevel(getLevelInfo(count));
+      const count = booksRead + 1;
+      setBooksRead(count);
       if (
         count === levelRank.Bookworm ||
         count === levelRank.Librarian ||
@@ -100,7 +100,7 @@ export default function ArchivePage() {
       <ModalComponent
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        level={level?.level ?? 'Bookworm'}
+        booksRead={booksRead}
       />
       <header>
         <p className="mt-1 text-slate-400">A shared history of every book your club has read.</p>

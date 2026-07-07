@@ -1,16 +1,18 @@
 'use client';
 
+import { getLevelInfo } from '@/lib/levels';
 import { Button, Modal } from '@heroui/react';
 
 export default function ModalComponent({
   isOpen,
   onClose,
-  level,
+  booksRead,
 }: {
   isOpen: boolean;
   onClose: () => void;
-  level: string;
+  booksRead: number;
 }) {
+  const levelInfo = getLevelInfo(booksRead);
   return (
     <Modal>
       <Modal.Backdrop isOpen={isOpen}>
@@ -20,8 +22,12 @@ export default function ModalComponent({
               <Modal.Heading>You Leveled Up!</Modal.Heading>
             </Modal.Header>
             <Modal.Body>
-              <p>You are now a {level}!</p>
-              <img src={`/icons/${level}.png`} alt={`${level} icon`} className="w-12 h-12" />
+              <p>You are now a {levelInfo.level}!</p>
+              <img
+                src={`/icons/${levelInfo.level}.png`}
+                alt={`${levelInfo.level} icon`}
+                className="w-12 h-12"
+              />
             </Modal.Body>
             <Modal.Footer>
               <Button className="w-full" onPress={onClose}>

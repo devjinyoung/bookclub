@@ -68,7 +68,6 @@ export function AppHeader() {
 
   const avatarName = profile?.name ?? 'User';
   const avatarInitials = getInitials(avatarName);
-  const ownProfileHref = profile?.id ? `/profile/${profile.id}` : null;
 
   async function handleLogout() {
     try {
@@ -83,8 +82,8 @@ export function AppHeader() {
   }
   function onDropdownAction(key: Key) {
     const action = String(key);
-    if (action === 'view-profile' && ownProfileHref) {
-      router.push(ownProfileHref);
+    if (action === 'view-profile') {
+      router.push('/profile');
     }
     if (action === 'edit-profile' && profile?.id) {
       setIsEditProfileModalOpen(true);
@@ -129,9 +128,7 @@ export function AppHeader() {
               className="bg-slate-900 text-base text-slate-300 min-w-[160px]"
             >
               <DropdownMenu aria-label="User menu" onAction={onDropdownAction}>
-                <DropdownItem id="view-profile" isDisabled={!ownProfileHref}>
-                  View my profile
-                </DropdownItem>
+                <DropdownItem id="view-profile">View my profile</DropdownItem>
                 <DropdownItem id="edit-profile" isDisabled={!profile?.id}>
                   Edit profile
                 </DropdownItem>

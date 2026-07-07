@@ -16,15 +16,17 @@ import {
 } from '@/lib/readingStatus';
 import { fetchNominationsWithVotes, type NominationWithMeta } from '@/lib/nominations';
 import Link from 'next/link';
-import { fetchBooksReadCount, getLevelInfo, levelRank, type LevelInfo } from '@/lib/levels';
+import { getLevelInfo, levelRank } from '@/lib/levels';
 import { fetchArchivedBooks, type ArchivedBookWithMeta } from '@/lib/archive';
 import ModalComponent from '@/components/Modal';
 import { ProgressSection } from '@/components/ProgressSection';
 import { useConfetti } from '@/hooks/useConfetti';
+import { useProfile } from '@/contexts/ProfileContext';
 
 export default function DashboardPage() {
   const { fire, canvas } = useConfetti();
   const { currentUserId, isLoading: isAuthLoading } = useAuth();
+  const { profile, isLoading: isProfileLoading, booksRead, setBooksRead } = useProfile();
   const [currentBook, setCurrentBook] = useState<CurrentBookWithMeta | null>(null);
   const [loadingCurrentBook, setLoadingCurrentBook] = useState(true);
   const [currentBookError, setCurrentBookError] = useState<string | null>(null);
@@ -42,7 +44,6 @@ export default function DashboardPage() {
   const [topNominations, setTopNominations] = useState<NominationWithMeta[]>([]);
   const [nominationsError, setNominationsError] = useState<string | null>(null);
 
-  const [levelInfo, setLevelInfo] = useState<LevelInfo | null>(null);
   const [progressError, setProgressError] = useState<string | null>(null);
 
   const [recentArchived, setRecentArchived] = useState<ArchivedBookWithMeta[]>([]);
@@ -55,11 +56,9 @@ export default function DashboardPage() {
 
     async function load() {
       try {
-        if (!currentUserId) return;
+        if (!currentUserId || isProfileLoading) return;
 
         const book = await fetchCurrentBook();
-        const count = await fetchBooksReadCount(currentUserId);
-        setLevelInfo(getLevelInfo(count));
 
         if (book) {
           setCurrentBook(book);
@@ -74,7 +73,7 @@ export default function DashboardPage() {
     }
 
     load();
-  }, [isAuthLoading, currentUserId]);
+  }, [isAuthLoading, currentUserId, isProfileLoading]);
 
   useEffect(() => {
     fetchNominationsWithVotes()
@@ -106,14 +105,17 @@ export default function DashboardPage() {
     try {
       await updateCurrentBookStatus(currentUserId!, currentBook!.book_id, status);
       const read = status === 'read';
-      const newBookCount = read ? levelInfo!.booksRead + 1 : levelInfo!.booksRead - 1;
+      if (read) {
+        setBooksRead(booksRead + 1);
+      } else if (!read) {
+        setBooksRead(booksRead - 1);
+      }
 
-      setLevelInfo(getLevelInfo(newBookCount));
       if (
         read &&
-        (newBookCount === levelRank.Bookworm ||
-          newBookCount === levelRank.Librarian ||
-          newBookCount === levelRank.Shakespeare)
+        (booksRead === levelRank.Bookworm ||
+          booksRead === levelRank.Librarian ||
+          booksRead === levelRank.Shakespeare)
       ) {
         setIsModalOpen(true);
       }
@@ -130,7 +132,7 @@ export default function DashboardPage() {
       <ModalComponent
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        level={levelInfo?.level ?? 'Bookworm'}
+        level={getLevelInfo(booksRead).level}
       />
       {/* Current Book section */}
       <section className="space-y-3  px-3">
@@ -215,7 +217,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </section>
-      <ProgressSection levelInfo={levelInfo} progressError={progressError} />
+      <ProgressSection booksRead={booksRead} progressError={progressError} />
 
       {/* Top Nominations */}
       <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">

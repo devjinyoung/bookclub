@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { getLevelBand, levelRank, type LevelInfo } from '@/lib/levels';
+import { getLevelBand, levelRank, type LevelInfo, getLevelInfo } from '@/lib/levels';
 
 interface ProgressSectionProps {
-  levelInfo: LevelInfo | null;
   progressError?: string | null;
   title?: string;
   emptyMessage?: string;
+  booksRead: number;
 }
 
 function LevelProgressBar({ levelInfo }: { levelInfo: LevelInfo }) {
@@ -37,13 +37,13 @@ function LevelProgressBar({ levelInfo }: { levelInfo: LevelInfo }) {
 }
 
 export function ProgressSection({
-  levelInfo,
+  booksRead,
   progressError = null,
   title = 'Your Progress',
   emptyMessage = 'Your current level and books read will appear here once you start logging reads.',
 }: ProgressSectionProps) {
   const [showProgressInfo, setShowProgressInfo] = useState(false);
-
+  const levelInfo = getLevelInfo(booksRead);
   return (
     <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
       <div className="relative flex items-center">
