@@ -9,6 +9,7 @@ import { supabaseBrowserClient } from '@/lib/supabaseClient';
 import ModalComponent from '@/components/Modal';
 import { getLevelInfo, LevelInfo, levelRank, fetchBooksReadCount } from '@/lib/levels';
 import { useProfile } from '@/contexts/ProfileContext';
+import { useConfetti } from '@/hooks/useConfetti';
 
 const MONTH_NAMES = [
   'January',
@@ -30,6 +31,8 @@ export default function ArchivePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { currentUserId } = useAuth();
+  const { fire, canvas } = useConfetti();
+
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [readBookIds, setReadBookIds] = useState<Set<string>>(new Set());
@@ -48,6 +51,11 @@ export default function ArchivePage() {
         setLoading(false);
       });
   }, []);
+
+  useEffect(() => {
+    if (!isModalOpen) return;
+    fire();
+  }, [isModalOpen, fire]);
 
   useEffect(() => {
     if (!currentUserId || archivedBooks.length === 0) {
@@ -97,6 +105,7 @@ export default function ArchivePage() {
 
   return (
     <div className="space-y-4">
+      {canvas}
       <ModalComponent
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

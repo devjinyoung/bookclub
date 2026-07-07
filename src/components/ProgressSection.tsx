@@ -44,6 +44,7 @@ export function ProgressSection({
 }: ProgressSectionProps) {
   const [showProgressInfo, setShowProgressInfo] = useState(false);
   const levelInfo = getLevelInfo(booksRead);
+  console.log({ levelInfo });
   return (
     <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
       <div className="relative flex items-center">

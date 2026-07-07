@@ -105,17 +105,19 @@ export default function DashboardPage() {
     try {
       await updateCurrentBookStatus(currentUserId!, currentBook!.book_id, status);
       const read = status === 'read';
+      let count = booksRead;
       if (read) {
-        setBooksRead(booksRead + 1);
+        count++;
       } else if (!read) {
-        setBooksRead(booksRead - 1);
+        count--;
       }
+      setBooksRead(count);
 
       if (
         read &&
-        (booksRead === levelRank.Bookworm ||
-          booksRead === levelRank.Librarian ||
-          booksRead === levelRank.Shakespeare)
+        (count === levelRank.Bookworm ||
+          count === levelRank.Librarian ||
+          count === levelRank.Shakespeare)
       ) {
         setIsModalOpen(true);
       }
@@ -132,7 +134,7 @@ export default function DashboardPage() {
       <ModalComponent
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        level={getLevelInfo(booksRead).level}
+        booksRead={booksRead}
       />
       {/* Current Book section */}
       <section className="space-y-3  px-3">
@@ -217,8 +219,11 @@ export default function DashboardPage() {
           </div>
         </div>
       </section>
-      <ProgressSection booksRead={booksRead} progressError={progressError} />
-
+      {isProfileLoading ? (
+        <p>Loading progress…</p>
+      ) : (
+        <ProgressSection booksRead={booksRead} progressError={progressError} />
+      )}
       {/* Top Nominations */}
       <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
         <div className="flex items-center justify-between">

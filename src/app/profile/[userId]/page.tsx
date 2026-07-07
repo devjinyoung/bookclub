@@ -26,9 +26,7 @@ export default function ProfilePage() {
       .catch(() => {
         console.error('Unable to load profile.');
       })
-      .finally(() => {
-        setLoading(false);
-      });
+      .finally(() => {});
   }, [userId]);
 
   useEffect(() => {
@@ -36,6 +34,7 @@ export default function ProfilePage() {
       try {
         const count = await fetchBooksReadCount(userId);
         setBooksRead(count);
+        setLoading(false);
       } catch {
         console.error('Unable to load reading progress.');
       }
@@ -44,10 +43,14 @@ export default function ProfilePage() {
     loadProgress();
   }, [userId]);
 
+  if (loading || !profile) {
+    return <p>Loading...</p>;
+  }
+
   return (
     <section>
       <div className="flex flex-col gap-4">
-        {!loading && profile && <ProfileView profile={profile} />}
+        <ProfileView profile={profile} />
         <ProgressSection booksRead={booksread} title={`${profile?.name}'s progress`} />
         <ReadBooks userId={userId} />
       </div>

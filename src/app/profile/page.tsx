@@ -24,13 +24,16 @@ export default function MyProfile() {
   function handleUnread() {
     setBooksRead(booksRead - 1);
   }
+  if (isLoading || !profile) {
+    return <p>Loading...</p>;
+  }
 
   return (
     <section>
       <div className="flex flex-col gap-4">
-        {!isLoading && profile && <ProfileView profile={profile} />}
+        <ProfileView profile={profile} />
         <ProgressSection booksRead={booksRead} />
-        {!isLoading && profile && <ReadBooks userId={profile!.id} handleUnread={handleUnread} />}
+        <ReadBooks userId={profile!.id} handleUnread={handleUnread} />
       </div>
     </section>
   );
