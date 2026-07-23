@@ -86,9 +86,17 @@ export default function MembersPage() {
                 className="rounded-xl border border-slate-800 bg-slate-950/40 p-3"
               >
                 <Link href={`/profile/${member.id}`} className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-500  font-semibold text-slate-950">
-                    {initials}
-                  </div>
+                  {member.avatar_url ? (
+                    <img
+                      src={member.avatar_url}
+                      alt={`${member.name} avatar`}
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 font-semibold text-slate-950">
+                      {initials}
+                    </div>
+                  )}
                   <div className="flex-1">
                     <p className="text-sm font-medium text-slate-200">{member.name}</p>
                   </div>
