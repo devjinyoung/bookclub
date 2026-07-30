@@ -104,17 +104,19 @@ export default function DashboardPage() {
     setUpdatingStatus(true);
     try {
       await updateCurrentBookStatus(currentUserId!, currentBook!.book_id, status);
-      const read = status === 'read';
+      const wasRead = userStatus === 'read';
+      const isRead = status === 'read';
       let count = booksRead;
-      if (read) {
+      if (isRead && !wasRead) {
         count++;
-      } else if (!read) {
+      } else if (!isRead && wasRead) {
         count--;
       }
       setBooksRead(count);
 
       if (
-        read &&
+        isRead &&
+        !wasRead &&
         (count === levelRank.Bookworm ||
           count === levelRank.Librarian ||
           count === levelRank.Shakespeare)
