@@ -2,6 +2,9 @@
   "name": "app",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -14,7 +17,8 @@
     "@gravity-ui/icons": "^2.18.0",
     "@heroui/react": "^3.0.1",
     "@heroui/styles": "^3.0.1",
-    "@supabase/supabase-js": "^2.99.2",
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.111.0",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-canvas-confetti": "^2.0.7",
@@ -22,7 +26,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",

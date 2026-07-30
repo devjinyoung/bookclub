@@ -1,4 +1,5 @@
 import { supabaseBrowserClient } from './supabaseClient';
+import { uploadAvatarAndGetUrl } from './avatar';
 
 export type UpdateProfileParams = {
   userId: string;
@@ -65,35 +66,4 @@ export async function updateProfile({ userId, name, bio, avatar }: UpdateProfile
   }
 
   return data;
-}
-
-async function uploadAvatarAndGetUrl(userId: string, avatar: File): Promise<string> {
-  const extension = getFileExtension(avatar);
-  const path = `${userId}/avatar-${Date.now()}.${extension}`;
-
-  const { error } = await supabaseBrowserClient.storage.from('avatars').upload(path, avatar, {
-    contentType: avatar.type || undefined,
-  });
-
-  if (error) {
-    throw error;
-  }
-
-  const { data } = supabaseBrowserClient.storage.from('avatars').getPublicUrl(path);
-  return data.publicUrl;
-}
-
-function getFileExtension(file: File): string {
-  const fromName = file.name.split('.').pop()?.toLowerCase();
-  if (fromName && fromName.length <= 5) {
-    return fromName;
-  }
-
-  const fromType = file.type.split('/').pop()?.toLowerCase();
-  if (fromType) {
-    if (fromType === 'jpeg') return 'jpg';
-    return fromType;
-  }
-
-  return 'png';
 }

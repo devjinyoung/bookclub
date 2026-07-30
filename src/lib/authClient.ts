@@ -1,4 +1,5 @@
 import { supabaseBrowserClient } from './supabaseClient';
+import { uploadAvatarAndGetUrl } from './avatar';
 
 interface SignupParams {
   name: string;
@@ -44,42 +45,7 @@ export async function signUpWithEmail({ name, email, password, bio, avatar }: Si
     }
   }
 
-  if (typeof document !== 'undefined') {
-    document.cookie = 'bookclub-auth=1; path=/';
-  }
-
   return data;
-}
-
-async function uploadAvatarAndGetUrl(userId: string, avatar: File): Promise<string> {
-  const extension = getFileExtension(avatar);
-  const path = `${userId}/avatar-${Date.now()}.${extension}`;
-
-  const { error } = await supabaseBrowserClient.storage.from('avatars').upload(path, avatar, {
-    contentType: avatar.type || undefined,
-  });
-
-  if (error) {
-    throw error;
-  }
-
-  const { data } = supabaseBrowserClient.storage.from('avatars').getPublicUrl(path);
-  return data.publicUrl;
-}
-
-function getFileExtension(file: File): string {
-  const fromName = file.name.split('.').pop()?.toLowerCase();
-  if (fromName && fromName.length <= 5) {
-    return fromName;
-  }
-
-  const fromType = file.type.split('/').pop()?.toLowerCase();
-  if (fromType) {
-    if (fromType === 'jpeg') return 'jpg';
-    return fromType;
-  }
-
-  return 'png';
 }
 
 interface SignInParams {
@@ -95,11 +61,6 @@ export async function signInWithEmail({ email, password }: SignInParams) {
 
   if (error) {
     throw error;
-  }
-
-  if (typeof document !== 'undefined') {
-    console.log('setting cookie');
-    document.cookie = 'bookclub-auth=1; path=/';
   }
 
   return data;

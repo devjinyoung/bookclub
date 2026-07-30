@@ -1,8 +1,18 @@
 import { NextResponse } from 'next/server';
+import { createSupabaseServerClient } from '@/lib/supabaseServer';
 
 const GOOGLE_BOOKS_BASE_URL = 'https://www.googleapis.com/books/v1/volumes';
 
 export async function GET(request: Request) {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q');
 
