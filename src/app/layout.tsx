@@ -37,7 +37,9 @@ export default function RootLayout({
             <ProfileProvider>
               <AuthGuard>
                 <AppHeader />
-                <main className="w-full max-w-md flex-1 px-4 py-4 pb-20">{children}</main>
+                <main className="w-full max-w-md flex-1 px-4 py-4 pb-20 md:max-w-2xl md:px-6 md:py-6 md:pb-24 lg:max-w-3xl">
+                  {children}
+                </main>
                 <BottomNav />
               </AuthGuard>
             </ProfileProvider>

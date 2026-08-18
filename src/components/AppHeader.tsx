@@ -91,12 +91,12 @@ export function AppHeader() {
 
   if (!profile || isLoading) {
     return (
-      <header className="sticky top-0 z-10 flex w-full max-w-md min-h-12 items-center justify-between gap-2 border-b border-slate-800 bg-slate-950/95 px-2 backdrop-blur supports-[backdrop-filter]:bg-slate-950/80"></header>
+      <header className="sticky top-0 z-10 flex w-full max-w-md md:max-w-2xl lg:max-w-3xl min-h-12 items-center justify-between gap-2 border-b border-slate-800 bg-slate-950/95 px-2 md:px-4 backdrop-blur supports-[backdrop-filter]:bg-slate-950/80"></header>
     );
   }
 
   return (
-    <header className="sticky top-0 z-10 flex w-full max-w-md items-center justify-between gap-2 border-b border-slate-800 bg-slate-950/95 px-2 backdrop-blur supports-[backdrop-filter]:bg-slate-950/80">
+    <header className="sticky top-0 z-10 flex w-full max-w-md md:max-w-2xl lg:max-w-3xl items-center justify-between gap-2 border-b border-slate-800 bg-slate-950/95 px-2 md:px-4 backdrop-blur supports-[backdrop-filter]:bg-slate-950/80">
       <button
         type="button"
         onClick={() => router.back()}

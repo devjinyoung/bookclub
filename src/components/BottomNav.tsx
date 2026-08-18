@@ -29,7 +29,7 @@ export function BottomNav() {
 
   return (
     <nav className="w-full sticky bottom-0 left-0 right-0 border-t border-slate-800 bg-black">
-      <div className="mx-auto flex w-full items-stretch justify-around px-2 py-2 text-xs text-white">
+      <div className="mx-auto flex w-full max-w-md md:max-w-2xl lg:max-w-3xl items-stretch justify-around md:justify-center md:gap-10 px-2 py-2 text-xs text-white">
         {tabs.map((tab) => {
           const isActive = tab.href === '/' ? pathname === '/' : pathname.startsWith(tab.href);
 
@@ -37,11 +37,11 @@ export function BottomNav() {
             <Link
               key={tab.href}
               href={tab.href}
-              className={`flex flex-col items-center justify-center gap-0.5 rounded-md px-2 py-1 transition-colors ${
+              className={`flex flex-col items-center justify-center gap-0.5 rounded-md px-2 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                 isActive ? 'text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
-              <img src={`/icons/${tab.icon}`} alt={tab.label} className="h-5 w-5 invert" />
+              <img src={`/icons/${tab.icon}`} alt="" aria-hidden className="h-5 w-5 invert" />
               <span className="leading-none">{tab.label}</span>
             </Link>
           );
